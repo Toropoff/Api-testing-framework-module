@@ -42,6 +42,15 @@ val runSuitesForAllure by tasks.registering {
     group = "verification"
     description = "Runs smoke, regression and integration suites to prepare Allure results"
 
+    doFirst {
+        delete(aggregatedResultsDir)
+    }
+}
+
+val runSuitesForAllure by tasks.registering {
+    group = "verification"
+    description = "Runs smoke, regression and integration suites to prepare Allure results"
+
     dependsOn(
         ":test-suites:smoke:test",
         ":test-suites:regression:test",
