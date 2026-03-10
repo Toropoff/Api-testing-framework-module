@@ -7,7 +7,7 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.gradle.jvm.toolchain.JavaLanguageVersion
 
 plugins {
-    id("io.qameta.allure") version "2.12.0"
+    id("io.qameta.allure") version "3.0.1"
 }
 
 allprojects {
@@ -19,34 +19,11 @@ allprojects {
     }
 }
 
-val testModules = listOf("tests-smoke", "tests-regression", "tests-integration")
-
-val aggregateAllureResults by tasks.registering(Copy::class) {
-    group = "verification"
-    description = "Collects Allure results from test modules into a single directory."
-
-    from(testModules.map { "$it/build/allure-results" })
-    from(testModules.map { "$it/allure-results" })
-    into(layout.buildDirectory.dir("allure-results"))
-
-    mustRunAfter(testModules.map { ":$it:test" })
-}
-
-artifacts {
-    add("allureRawResultElements", layout.buildDirectory.dir("allure-results")) {
-        builtBy(aggregateAllureResults)
-    }
-}
 
 tasks.named("allureReport") {
-    dependsOn(aggregateAllureResults)
     doFirst {
         delete(layout.buildDirectory.dir("reports/allure-report/allureReport"))
     }
-}
-
-tasks.named("allureServe") {
-    dependsOn(aggregateAllureResults)
 }
 
 subprojects {

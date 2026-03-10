@@ -85,7 +85,7 @@ You can combine `-D` and `-P` in one command.
 
 ## Allure Reports
 
-The root project uses the Allure Gradle plugin and aggregated result collection to generate a single report across test modules.
+The root project uses the Allure Gradle plugin configured via the Kotlin DSL `plugins {}` block.
 
 1) Run tests (one module or all):
 
@@ -112,7 +112,7 @@ gradle allureServe
 ```
 
 Notes:
-- Task `aggregateAllureResults` collects results from `tests-*/build/allure-results` and legacy `tests-*/allure-results` locations.
+- Use only plugin-based Allure tasks (`allureReport`, `allureServe`) and avoid duplicate manual task declarations with the same names.
 - If tests are skipped (for example, live API disabled), Allure still generates a report with skipped status.
 
 ## Run Profiles and Secrets
