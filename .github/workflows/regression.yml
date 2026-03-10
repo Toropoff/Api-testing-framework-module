@@ -13,7 +13,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '21'
       - uses: gradle/actions/setup-gradle@v3
       - name: Run regression suite
-        run: gradle :tests-regression:test -Dframework.profile=stage -Dframework.runLiveTests=true -Dtest.retry.maxAttempts=2
+        run: ./gradlew :test-suites:regression:test -Dframework.profile=stage -Dframework.runLiveTests=true -Dtest.retry.maxRetries=1

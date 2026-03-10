@@ -1,24 +1,26 @@
 # REST API Test Framework (Monorepo)
 
-Multi-module API test framework on Java 17 + Gradle + TestNG + Rest Assured with DTO-first, API POM, centralized retry, reporting, and integration adapters.
+Multi-module API test framework on Java 21 + Gradle + TestNG + Rest Assured with DTO-first, API POM, centralized retry, reporting, and integration adapters.
 
 ## Modules
 
 - `framework-core` - HTTP abstraction, request/response model, auth strategies, profile config, secrets providers, filters and masking, error model.
-- `framework-api-model` - DTOs, endpoint objects, flow objects, domain assertions.
+- `framework-api-model` - DTOs and transport models only (framework-level abstractions).
+- `examples/sample-domain` - sample domain API POM (`AuthApi`, `UserApi`, `OrderApi`), flows, and assertions.
 - `framework-testng` - base test classes, retry analyzer, listeners, soft assertions, data providers.
 - `framework-db-oracle` - Oracle datasource + jOOQ repositories + await helpers.
 - `framework-messaging-rabbitmq` - message bus abstraction, RabbitMQ publish/consume, correlation-id checks, await helpers.
 - `framework-contracts` - JSON schema validation, JsonUnit assertions, snapshot checks.
 - `framework-reporting` - Allure TestNG listener + request/response attachments with masking.
-- `tests-smoke` - smoke suite examples.
-- `tests-regression` - regression suite examples.
-- `tests-integration` - integration suite examples.
+- `framework-suite-support` - aggregated dependencies for suite modules.
+- `test-suites/tests-smoke` - smoke suite examples.
+- `test-suites/tests-regression` - regression suite examples.
+- `test-suites/tests-integration` - integration suite examples.
 
 ## Key Patterns Implemented
 
 - TestNG centralized retry (`FrameworkRetryAnalyzer`) with:
-  - global policy via JVM props (`test.retry.maxAttempts`, `test.retry.delayMs`),
+  - global policy via JVM props (`test.retry.maxRetries`, `test.retry.delayMs`),
   - custom policy via `@RetrySetting` on class/method,
   - attempt logging and flaky report (`RetryReportingListener`).
 - API POM:
@@ -59,12 +61,14 @@ Run all tests:
 ./gradlew test
 ```
 
+> Note: this repository keeps wrapper scripts and properties, but excludes `gradle/wrapper/gradle-wrapper.jar` from VCS to avoid binary artifacts in PRs. Regenerate it locally with `gradle wrapper` if needed.
+
 Run a specific suite module:
 
 ```bash
-./gradlew :tests-smoke:test
-./gradlew :tests-regression:test
-./gradlew :tests-integration:test
+./gradlew :test-suites:smoke:test
+./gradlew :test-suites:regression:test
+./gradlew :test-suites:integration:test
 ```
 
 ### Automatic CLI parameter pickup
@@ -75,9 +79,9 @@ You can use either JVM properties (`-D`) or Gradle project properties (`-P`) wit
 Examples:
 
 ```bash
-./gradlew :tests-smoke:test -Dframework.profile=stage -Dframework.runLiveTests=true
-./gradlew :tests-regression:test -Ptest.retry.maxAttempts=3 -Ptest.retry.delayMs=500
-./gradlew :tests-integration:test -Pauth.basic.username=my_user -Pauth.basic.password=my_pass
+./gradlew :test-suites:smoke:test -Dframework.profile=stage -Dframework.runLiveTests=true
+./gradlew :test-suites:regression:test -Ptest.retry.maxRetries=3 -Ptest.retry.delayMs=500
+./gradlew :test-suites:integration:test -Pauth.basic.username=my_user -Pauth.basic.password=my_pass
 ```
 
 You can combine `-D` and `-P` in one command.
@@ -88,9 +92,9 @@ You can combine `-D` and `-P` in one command.
 The root project uses the Allure Gradle plugin configured via the Kotlin DSL `plugins {}` block.
 Before report generation, root task `collectAllureResults` aggregates results from:
 
-- `tests-smoke/build/allure-results`
-- `tests-regression/build/allure-results`
-- `tests-integration/build/allure-results`
+- `test-suites/tests-smoke/build/allure-results`
+- `test-suites/tests-regression/build/allure-results`
+- `test-suites/tests-integration/build/allure-results`
 
 into a single source directory:
 
@@ -101,13 +105,13 @@ into a single source directory:
 1) Run tests for all three modules:
 
 ```bash
-gradle :tests-smoke:test :tests-regression:test :tests-integration:test
+./gradlew :test-suites:smoke:test :test-suites:regression:test :test-suites:integration:test
 ```
 
 2) Build one aggregated HTML report:
 
 ```bash
-gradle allureReport
+./gradlew allureReport
 ```
 
 Generated report path:
@@ -117,7 +121,7 @@ Generated report path:
 3) Open report locally with temporary web server:
 
 ```bash
-gradle allureServe
+./gradlew allureServe
 ```
 
 Notes:
@@ -141,7 +145,7 @@ Live API tests are disabled by default. Enable explicitly:
 Global retry policy:
 
 ```bash
--Dtest.retry.maxAttempts=2 -Dtest.retry.delayMs=500
+-Dtest.retry.maxRetries=2 -Dtest.retry.delayMs=500
 ```
 
 Environment secret convention (`EnvSecretsProvider`):
@@ -153,9 +157,9 @@ Environment secret convention (`EnvSecretsProvider`):
 
 ## Suite Entry Points
 
-- Smoke: `tests-smoke/src/test/resources/testng-smoke.xml`
-- Regression: `tests-regression/src/test/resources/testng-regression.xml`
-- Integration: `tests-integration/src/test/resources/testng-integration.xml`
+- Smoke: `test-suites/tests-smoke/src/test/resources/testng-smoke.xml`
+- Regression: `test-suites/tests-regression/src/test/resources/testng-regression.xml`
+- Integration: `test-suites/tests-integration/src/test/resources/testng-integration.xml`
 
 ## Notes
 

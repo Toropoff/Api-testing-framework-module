@@ -34,16 +34,16 @@ val collectAllureResults by tasks.registering(Copy::class) {
     val aggregatedResultsDir = layout.buildDirectory.dir("allure-results")
     into(aggregatedResultsDir)
 
-    from(layout.projectDirectory.dir("tests-smoke/build/allure-results"))
-    from(layout.projectDirectory.dir("tests-regression/build/allure-results"))
-    from(layout.projectDirectory.dir("tests-integration/build/allure-results"))
+    from(layout.projectDirectory.dir("test-suites/tests-smoke/build/allure-results"))
+    from(layout.projectDirectory.dir("test-suites/tests-regression/build/allure-results"))
+    from(layout.projectDirectory.dir("test-suites/tests-integration/build/allure-results"))
 
     includeEmptyDirs = false
 
     dependsOn(
-        ":tests-smoke:test",
-        ":tests-regression:test",
-        ":tests-integration:test"
+        ":test-suites:smoke:test",
+        ":test-suites:regression:test",
+        ":test-suites:integration:test"
     )
 
     doFirst {
