@@ -1,12 +1,16 @@
 package com.apiframework.testng.retry;
 
-public record RetryRuntimePolicy(int maxAttempts, long delayMs) {
+public record RetryRuntimePolicy(int maxRetries, long baseDelayMs) {
     public RetryRuntimePolicy {
-        if (maxAttempts < 1) {
-            throw new IllegalArgumentException("maxAttempts must be >= 1");
+        if (maxRetries < 0) {
+            throw new IllegalArgumentException("maxRetries must be >= 0");
         }
-        if (delayMs < 0) {
-            throw new IllegalArgumentException("delayMs must be >= 0");
+        if (baseDelayMs < 0) {
+            throw new IllegalArgumentException("baseDelayMs must be >= 0");
         }
+    }
+
+    public int maxAttempts() {
+        return maxRetries + 1;
     }
 }

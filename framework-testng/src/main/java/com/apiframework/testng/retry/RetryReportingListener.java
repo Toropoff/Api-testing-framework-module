@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.testng.ITestContext;
 import org.testng.ITestListener;
 import org.testng.ITestResult;
+import org.testng.Reporter;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -24,6 +25,7 @@ public final class RetryReportingListener implements ITestListener {
             String testId = result.getTestClass().getName() + "." + result.getMethod().getMethodName();
             passedAfterRetryTests.add(testId);
             LOGGER.warn("Test passed after retry: {} (retry count: {})", testId, retryCount);
+            Reporter.log("[framework][retry] retried=true retryCount=" + retryCount + " retryReason=" + result.getAttribute(FrameworkRetryAnalyzer.RETRY_REASON_ATTRIBUTE), true);
         }
     }
 
