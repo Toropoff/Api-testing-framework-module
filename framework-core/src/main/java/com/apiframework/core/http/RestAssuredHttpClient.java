@@ -9,6 +9,7 @@ import com.apiframework.core.model.ApiResponse;
 import com.apiframework.core.model.HttpMethod;
 import com.apiframework.core.model.HttpRetryPolicy;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
@@ -17,6 +18,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public final class RestAssuredHttpClient implements HttpClient {
     private static final Logger LOGGER = LoggerFactory.getLogger(RestAssuredHttpClient.class);
@@ -75,24 +77,33 @@ public final class RestAssuredHttpClient implements HttpClient {
     }
 
     private Response executeOnce(ApiRequest<?> request) {
-        RequestSpecification specification = new RequestSpecBuilder()
-            .addRequestSpecification(baseSpec)
-            .build();
+        Objects.requireNonNull(request.method(), "HTTP method must not be null");
+        String path = Objects.requireNonNull(request.path(), "Request path must not be null");
+
+        RequestSpecification specification = RestAssured
+            .given()
+            .spec(new RequestSpecBuilder().addRequestSpecification(baseSpec).build());
 
         authStrategy.apply(specification);
-        specification.headers(request.headers());
-        specification.queryParams(request.queryParams());
+
+        if (!request.headers().isEmpty()) {
+            specification.headers(request.headers());
+        }
+
+        if (!request.queryParams().isEmpty()) {
+            specification.queryParams(request.queryParams());
+        }
 
         if (request.body() != null) {
             specification.body(request.body());
         }
 
         return switch (request.method()) {
-            case GET -> specification.get(request.path());
-            case POST -> specification.post(request.path());
-            case PUT -> specification.put(request.path());
-            case PATCH -> specification.patch(request.path());
-            case DELETE -> specification.delete(request.path());
+            case GET -> specification.get(path);
+            case POST -> specification.post(path);
+            case PUT -> specification.put(path);
+            case PATCH -> specification.patch(path);
+            case DELETE -> specification.delete(path);
         };
     }
 
