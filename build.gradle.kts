@@ -33,19 +33,19 @@ val aggregateAllureResults by tasks.registering(Copy::class) {
     mustRunAfter(testModules.map { ":$it:test" })
 }
 
-val allureCommandline by configurations.creating
+val allureCliZip = configurations.maybeCreate("allureCliZip")
 
 val allureVersion = "2.33.0"
 
 dependencies {
-    allureCommandline("io.qameta.allure:allure-commandline:$allureVersion@zip")
+    add(allureCliZip.name, "io.qameta.allure:allure-commandline:$allureVersion@zip")
 }
 
 val unpackAllureCommandline by tasks.registering(Copy::class) {
     group = "verification"
     description = "Downloads and unpacks Allure commandline."
 
-    from({ allureCommandline.resolve().map { zipTree(it) } })
+    from({ allureCliZip.resolve().map { zipTree(it) } })
     into(layout.buildDirectory.dir("allure/commandline"))
 }
 
