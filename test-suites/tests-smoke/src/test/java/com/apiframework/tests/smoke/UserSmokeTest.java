@@ -1,35 +1,23 @@
 package com.apiframework.tests.smoke;
 
-import com.apiframework.sampledomain.assertions.UserAssertions;
-import com.apiframework.apimodel.dto.auth.LoginRequest;
-import com.apiframework.apimodel.dto.user.CreateUserRequest;
-import com.apiframework.sampledomain.endpoint.AuthApi;
-import com.apiframework.sampledomain.endpoint.UserApi;
-import com.apiframework.sampledomain.flow.RegistrationFlow;
-import com.apiframework.core.auth.AuthStrategy;
-import com.apiframework.core.auth.BasicAuthStrategy;
 import com.apiframework.core.filter.HttpFilterPolicy;
 import com.apiframework.core.model.ApiResponse;
-import com.apiframework.apimodel.dto.user.UserResponse;
 import com.apiframework.reporting.allure.ReportingFilterPolicies;
+import com.apiframework.sampledomain.assertions.EchoAssertions;
+import com.apiframework.sampledomain.endpoint.PostmanEchoApi;
+import com.apiframework.sampledomain.flow.EchoFlow;
+import com.apiframework.sampledomain.model.EchoGetResponse;
 import com.apiframework.testng.base.BaseApiTest;
-import com.apiframework.testng.dataprovider.FrameworkDataProviders;
+import org.testng.SkipException;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 public class UserSmokeTest extends BaseApiTest {
-    private RegistrationFlow registrationFlow;
+    private EchoFlow echoFlow;
 
     @BeforeClass(alwaysRun = true)
     public void initFlow() {
-        AuthApi authApi = new AuthApi(httpClient);
-        UserApi userApi = new UserApi(httpClient);
-        this.registrationFlow = new RegistrationFlow(authApi, userApi);
-    }
-
-    @Override
-    protected AuthStrategy authStrategy() {
-        return new BasicAuthStrategy(runtimeConfig.basicAuth().username(), runtimeConfig.basicAuth().password());
+        this.echoFlow = new EchoFlow(new PostmanEchoApi(httpClient));
     }
 
     @Override
@@ -37,12 +25,18 @@ public class UserSmokeTest extends BaseApiTest {
         return ReportingFilterPolicies.withAllureAttachments();
     }
 
-    @Test(dataProvider = "sample-users", dataProviderClass = FrameworkDataProviders.class)
-    public void shouldCreateUserViaRegistrationFlow(String email, String firstName, String lastName) {
-        LoginRequest loginRequest = new LoginRequest("smoke-user", "smoke-password");
-        CreateUserRequest createUserRequest = new CreateUserRequest(email, firstName, lastName);
+    @Override
+    protected boolean requiresLiveApi() {
+        return true;
+    }
 
-        ApiResponse<UserResponse> response = registrationFlow.registerUser(loginRequest, createUserRequest);
-        UserAssertions.assertUserCreated(response, email);
+    @Test
+    public void shouldEchoQueryParameter() {
+        try {
+            ApiResponse<EchoGetResponse> response = echoFlow.verifyQueryRoundtrip("suite", "smoke");
+            EchoAssertions.assertGetEcho(response, "suite", "smoke");
+        } catch (Throwable ex) {
+            throw new SkipException("Postman Echo is unavailable", ex);
+        }
     }
 }

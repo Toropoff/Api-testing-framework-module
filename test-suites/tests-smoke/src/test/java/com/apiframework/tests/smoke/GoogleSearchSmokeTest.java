@@ -1,29 +1,35 @@
 package com.apiframework.tests.smoke;
 
-import io.restassured.RestAssured;
-import io.restassured.response.Response;
+import com.apiframework.core.model.ApiResponse;
+import com.apiframework.sampledomain.assertions.EchoAssertions;
+import com.apiframework.sampledomain.endpoint.PostmanEchoApi;
+import com.apiframework.sampledomain.flow.EchoFlow;
+import com.apiframework.sampledomain.model.EchoGetResponse;
+import com.apiframework.testng.base.BaseApiTest;
 import org.testng.SkipException;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.assertTrue;
+public class GoogleSearchSmokeTest extends BaseApiTest {
+    private EchoFlow echoFlow;
 
-public class GoogleSearchSmokeTest {
+    @BeforeClass(alwaysRun = true)
+    public void initFlow() {
+        this.echoFlow = new EchoFlow(new PostmanEchoApi(httpClient));
+    }
+
+    @Override
+    protected boolean requiresLiveApi() {
+        return true;
+    }
 
     @Test
-    public void shouldReturnGoogleHomePageOnGetRequest() {
+    public void shouldEchoTraceQueryParameter() {
         try {
-            Response response = RestAssured
-                .given()
-                .redirects().follow(true)
-                .when()
-                .get("https://www.google.com");
-
-            assertTrue(response.statusCode() >= 200 && response.statusCode() < 400,
-                "Expected successful or redirected response from Google");
-            assertTrue(response.asString().toLowerCase().contains("google"),
-                "Expected response body to contain 'google'");
+            ApiResponse<EchoGetResponse> response = echoFlow.verifyQueryRoundtrip("trace", "google-replaced");
+            EchoAssertions.assertGetEcho(response, "trace", "google-replaced");
         } catch (Throwable ex) {
-            throw new SkipException("External network is unavailable for Google smoke check", ex);
+            throw new SkipException("Postman Echo is unavailable", ex);
         }
     }
 }
