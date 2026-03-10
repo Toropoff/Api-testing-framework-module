@@ -12,6 +12,15 @@ import io.restassured.specification.FilterableResponseSpecification;
 
 import java.util.UUID;
 
+/**
+ * Transport-level Allure reporting filter for a single HTTP request/response exchange.
+ * <p>
+ * Responsible for HTTP step lifecycle, request/response/metadata attachments, masking, and
+ * transport error attachment.
+ * <p>
+ * Not responsible for business-level Flow/Action/Assert semantics (see AllureActionExecutor)
+ * or TestNG lifecycle reporting such as labels/retry/summary (see AllureTestNgListener).
+ */
 public final class AllureHttpStepFilter implements Filter {
     private final HttpStepNameStrategy stepNameStrategy;
     private final HttpAttachmentRenderer attachmentRenderer;

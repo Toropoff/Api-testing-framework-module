@@ -4,6 +4,14 @@ import io.qameta.allure.Allure;
 
 import java.util.function.Supplier;
 
+/**
+ * Executor for business and test semantics in Allure steps.
+ * <p>
+ * Responsible for creating reusable Flow/Action/Assert steps in flow and assertion layers.
+ * <p>
+ * Not responsible for transport-level request/response attachments (HTTP filters layer)
+ * and not responsible for TestNG lifecycle metadata/summary (listener layer).
+ */
 public final class AllureActionExecutor {
     public <T> T action(String name, Supplier<T> action) {
         return Allure.step("Action: " + name, action::get);
