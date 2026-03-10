@@ -1,6 +1,5 @@
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.tasks.Copy
-import org.gradle.api.tasks.Exec
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.api.tasks.testing.Test
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
@@ -33,54 +32,21 @@ val aggregateAllureResults by tasks.registering(Copy::class) {
     mustRunAfter(testModules.map { ":$it:test" })
 }
 
-val allureCliZip = configurations.maybeCreate("allureCliZip")
-
-val allureVersion = "2.33.0"
-
-dependencies {
-    add(allureCliZip.name, "io.qameta.allure:allure-commandline:$allureVersion@zip")
+artifacts {
+    add("allureRawResultElements", layout.buildDirectory.dir("allure-results")) {
+        builtBy(aggregateAllureResults)
+    }
 }
 
-val unpackAllureCommandline by tasks.registering(Copy::class) {
-    group = "verification"
-    description = "Downloads and unpacks Allure commandline."
-
-    from({ allureCliZip.resolve().map { zipTree(it) } })
-    into(layout.buildDirectory.dir("allure/commandline"))
+tasks.named("allureReport") {
+    dependsOn(aggregateAllureResults)
+    doFirst {
+        delete(layout.buildDirectory.dir("reports/allure-report/allureReport"))
+    }
 }
 
-val allureReport by tasks.registering(Exec::class) {
-    group = "verification"
-    description = "Builds Allure HTML report from aggregated results."
-    dependsOn(aggregateAllureResults, unpackAllureCommandline)
-
-    val outputDir = layout.buildDirectory.dir("reports/allure-report/allureReport")
-    val inputDir = layout.buildDirectory.dir("allure-results")
-    val executablePath = layout.buildDirectory.file("allure/commandline/allure-${allureVersion}/bin/allure")
-
-    commandLine(
-        executablePath.get().asFile.absolutePath,
-        "generate",
-        inputDir.get().asFile.absolutePath,
-        "--clean",
-        "-o",
-        outputDir.get().asFile.absolutePath
-    )
-}
-
-tasks.register<Exec>("allureServe") {
-    group = "verification"
-    description = "Builds and serves Allure report locally."
-    dependsOn(aggregateAllureResults, unpackAllureCommandline)
-
-    val inputDir = layout.buildDirectory.dir("allure-results")
-    val executablePath = layout.buildDirectory.file("allure/commandline/allure-${allureVersion}/bin/allure")
-
-    commandLine(
-        executablePath.get().asFile.absolutePath,
-        "serve",
-        inputDir.get().asFile.absolutePath
-    )
+tasks.named("allureServe") {
+    dependsOn(aggregateAllureResults)
 }
 
 subprojects {

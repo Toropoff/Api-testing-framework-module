@@ -85,7 +85,7 @@ You can combine `-D` and `-P` in one command.
 
 ## Allure Reports
 
-The root project provides custom Gradle tasks for aggregated Allure report generation across test modules (without relying on the Allure Gradle plugin internals).
+The root project uses the Allure Gradle plugin and aggregated result collection to generate a single report across test modules.
 
 1) Run tests (one module or all):
 
