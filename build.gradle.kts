@@ -18,66 +18,59 @@ allprojects {
     }
 }
 
+val aggregatedAllureResultsDir = layout.buildDirectory.dir("allure-results")
+val suiteAllureResultDirs = listOf(
+    layout.projectDirectory.dir("test-suites/tests-smoke/build/allure-results"),
+    layout.projectDirectory.dir("test-suites/tests-regression/build/allure-results"),
+    layout.projectDirectory.dir("test-suites/tests-integration/build/allure-results")
+)
 
-val collectAllureResults by tasks.registering {
+val allureSuiteTaskPaths = listOf(
+    ":test-suites:smoke:test",
+    ":test-suites:regression:test",
+    ":test-suites:integration:test"
+)
+
+tasks.register("collectAllureResults") {
     group = "verification"
-    description = "Collects Allure results from test modules into a single root directory"
+    description = "Collects Allure results from test modules into build/allure-results"
 
     doLast {
-        val aggregatedResultsDir = layout.buildDirectory.dir("allure-results").get().asFile
-        delete(aggregatedResultsDir)
-        aggregatedResultsDir.mkdirs()
+        val outputDir = aggregatedAllureResultsDir.get().asFile
+        delete(outputDir)
+        outputDir.mkdirs()
 
         copy {
-            from(layout.projectDirectory.dir("test-suites/tests-smoke/build/allure-results"))
-            from(layout.projectDirectory.dir("test-suites/tests-regression/build/allure-results"))
-            from(layout.projectDirectory.dir("test-suites/tests-integration/build/allure-results"))
-            into(aggregatedResultsDir)
+            suiteAllureResultDirs.forEach { from(it) }
+            into(outputDir)
             includeEmptyDirs = false
         }
     }
 }
 
-val runSuitesForAllure by tasks.registering {
+tasks.register("runSuitesForAllure") {
     group = "verification"
     description = "Runs smoke, regression and integration suites to prepare Allure results"
 
-    doFirst {
-        delete(aggregatedResultsDir)
-    }
-}
-
-val runSuitesForAllure by tasks.registering {
-    group = "verification"
-    description = "Runs smoke, regression and integration suites to prepare Allure results"
-
-    dependsOn(
-        ":test-suites:smoke:test",
-        ":test-suites:regression:test",
-        ":test-suites:integration:test"
-    )
+    dependsOn(allureSuiteTaskPaths)
 }
 
 tasks.named("allureReport") {
-    dependsOn(collectAllureResults)
+    dependsOn("collectAllureResults")
+    mustRunAfter("runSuitesForAllure")
 
     doFirst {
         delete(layout.buildDirectory.dir("reports/allure-report/allureReport"))
     }
 }
 
-collectAllureResults.configure {
-    mustRunAfter(runSuitesForAllure)
-}
-
 tasks.register("allureReportWithTests") {
     group = "verification"
     description = "Runs all suites and then builds the aggregated Allure report"
 
-    dependsOn(runSuitesForAllure)
+    dependsOn("runSuitesForAllure")
     dependsOn("allureReport")
 }
-
 
 val forceAllureSuiteRun = gradle.startParameter.taskNames.any { taskName ->
     taskName == "allureReportWithTests" ||
@@ -86,11 +79,7 @@ val forceAllureSuiteRun = gradle.startParameter.taskNames.any { taskName ->
         taskName.endsWith(":runSuitesForAllure")
 }
 
-val allureSuiteTestTasks = setOf(
-    ":test-suites:smoke:test",
-    ":test-suites:regression:test",
-    ":test-suites:integration:test"
-)
+val allureSuiteTestTasks = allureSuiteTaskPaths.toSet()
 
 subprojects {
     apply(plugin = "java-library")
