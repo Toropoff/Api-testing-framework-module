@@ -82,6 +82,39 @@ Examples:
 
 You can combine `-D` and `-P` in one command.
 
+
+## Allure Reports
+
+The root project uses the Allure Gradle plugin configured via the Kotlin DSL `plugins {}` block.
+
+1) Run tests (one module or all):
+
+```bash
+gradle :tests-smoke:test
+gradle :tests-regression:test
+gradle :tests-integration:test
+```
+
+2) Build a single HTML report from collected results:
+
+```bash
+gradle allureReport
+```
+
+Generated report path:
+
+- `build/reports/allure-report/allureReport/index.html`
+
+3) Open report locally with temporary web server:
+
+```bash
+gradle allureServe
+```
+
+Notes:
+- Use only plugin-based Allure tasks (`allureReport`, `allureServe`) and avoid duplicate manual task declarations with the same names.
+- If tests are skipped (for example, live API disabled), Allure still generates a report with skipped status.
+
 ## Run Profiles and Secrets
 
 Active profile:
