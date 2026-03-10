@@ -18,7 +18,7 @@ public class PostmanEchoRegressionTest extends BaseApiTest {
 
     @BeforeClass(alwaysRun = true)
     public void initFlow() {
-        this.echoFlow = new EchoFlow(new PostmanEchoApi(httpClient));
+        this.echoFlow = new EchoFlow(new PostmanEchoApi(httpClient()));
     }
 
     @Override
