@@ -104,7 +104,7 @@ into a single source directory:
 ### Allure tasks in root project
 
 - `collectAllureResults` - collects existing results from suite modules into `build/allure-results`.
-- `runSuitesForAllure` - explicitly runs smoke/regression/integration tests to prepare fresh Allure results.
+- `runSuitesForAllure` - explicitly runs smoke/regression/integration tests to prepare fresh Allure results (for this flow suite tests are forced to execute, not taken from up-to-date cache).
 - `allureReport` - builds HTML report from already existing/collected results (does **not** run test suites by itself).
 - `allureReportWithTests` - orchestration task: runs `runSuitesForAllure` and then generates `allureReport`.
 
