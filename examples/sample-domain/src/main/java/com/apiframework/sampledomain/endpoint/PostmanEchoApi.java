@@ -8,9 +8,13 @@ import com.apiframework.sampledomain.model.EchoGetResponse;
 import com.apiframework.sampledomain.model.EchoPayload;
 import com.apiframework.sampledomain.model.EchoPostResponse;
 
-public final class PostmanEchoApi extends BaseApiEndpoint {
+import java.util.Objects;
+
+public final class PostmanEchoApi {
+    private final HttpClient httpClient;
+
     public PostmanEchoApi(HttpClient httpClient) {
-        super(httpClient);
+        this.httpClient = Objects.requireNonNull(httpClient, "httpClient must not be null");
     }
 
     public ApiResponse<EchoGetResponse> getEcho(String key, String value) {
