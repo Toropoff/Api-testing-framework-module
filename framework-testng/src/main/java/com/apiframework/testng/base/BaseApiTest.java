@@ -77,7 +77,7 @@ public abstract class BaseApiTest {
     protected HttpFilterPolicy filterPolicy() {
         try {
             Class<?> policiesClass = Class.forName("com.apiframework.reporting.allure.ReportingFilterPolicies");
-            return (HttpFilterPolicy) policiesClass.getMethod("withAllureAttachments").invoke(null);
+            return (HttpFilterPolicy) policiesClass.getMethod("withAllureReporting").invoke(null);
         } catch (Exception ignored) {
             // Safety fallback for scenarios where framework-reporting is intentionally absent from classpath.
             return HttpFilterPolicy.defaultPolicy();

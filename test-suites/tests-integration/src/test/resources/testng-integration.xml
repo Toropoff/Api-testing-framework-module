@@ -7,7 +7,7 @@
     </listeners>
     <test name="Integration API Tests">
         <classes>
-            <class name="com.apiframework.tests.integration.OrderIntegrationTest"/>
+            <class name="com.apiframework.tests.integration.PostmanEchoIntegrationTest"/>
         </classes>
     </test>
 </suite>

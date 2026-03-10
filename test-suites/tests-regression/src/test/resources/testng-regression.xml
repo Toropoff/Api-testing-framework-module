@@ -7,7 +7,7 @@
     </listeners>
     <test name="Regression API Tests">
         <classes>
-            <class name="com.apiframework.tests.regression.OrderRegressionTest"/>
+            <class name="com.apiframework.tests.regression.PostmanEchoRegressionTest"/>
         </classes>
     </test>
 </suite>
