@@ -51,6 +51,33 @@ Multi-module API test framework on Java 21 + Gradle + TestNG + Rest Assured with
   - auto-attachments for request/response,
   - masking for headers and body fields.
 
+## How reporting works (runtime flow)
+
+End-to-end reporting pipeline for tests based on `BaseApiTest`:
+
+1. `BaseApiTest` creates `HttpClient` with reporting-aware filter policy (`ReportingFilterPolicies.withAllureReporting()`) by default.
+2. Endpoint class (for example `PostmanEchoApi`) executes transport call via `httpClient.execute(...)`.
+3. `AllureHttpStepFilter` (framework-reporting filter layer) creates the HTTP step and attaches request/response/metadata (with masking).
+4. Domain orchestration (`EchoFlow`) creates `Flow:` and `Action:` steps via `AllureActionExecutor`.
+5. Domain checks (`EchoAssertions`) create `Assert:` steps via `AllureActionExecutor`.
+6. `AllureTestNgListener` enriches test lifecycle only (labels, retry metadata, failure stacktrace, run summary).
+
+### Reporting responsibility boundaries
+
+| Reporting concern | Owner layer/class | Must contain | Must not contain |
+| --- | --- | --- | --- |
+| HTTP request/response reporting | `framework-reporting` / `AllureHttpStepFilter` | HTTP step name, request/response/metadata attachments, masking, transport error attachment | Business-flow step semantics (`Flow:`/`Action:`/`Assert:`), TestNG lifecycle summary |
+| Business/test action reporting | Domain flow/assert layers via `AllureActionExecutor` | `Flow:`, `Action:`, `Assert:` semantic steps | Direct request/response attachment logic, listener lifecycle logic |
+| Test lifecycle reporting | `framework-reporting` / `AllureTestNgListener` | labels/tags, retry metadata, failure stacktrace, run/test summary | Per-request HTTP step creation and request/response serialization |
+
+Contribution rule for new reporting logic:
+
+- new HTTP-level attachment/step detail -> `framework-reporting` filter layer,
+- new business flow/action/assert step -> flow/assertion layer via `AllureActionExecutor`,
+- new retry/failure/summary metadata -> `AllureTestNgListener`.
+
+Architectural rule for endpoint classes: transport only. Do not add `Allure.step(...)` or `Allure.addAttachment(...)` directly to endpoint methods.
+
 ## Running Tests
 
 ### Quick start
@@ -103,6 +130,44 @@ Any test extending `BaseApiTest` automatically gets reporting-aware HTTP filter 
 ```
 
 `BaseApiTest` still allows local override of `filterPolicy()` for special scenarios.
+
+## Sample domain architecture (`examples/sample-domain`)
+
+`examples/sample-domain` is the reference usage pattern:
+
+- `endpoint` -> transport-level operations only (`PostmanEchoApi`),
+- `flow` -> orchestration and business intent (`EchoFlow`),
+- `assertions` -> domain-level checks (`EchoAssertions`),
+- `model` -> API DTOs for this domain (`EchoGetResponse`, `EchoPostResponse`, `EchoPayload`).
+
+DTOs should live in the concrete domain/example module (for example, `examples/sample-domain/model`), not in framework modules.
+
+### Minimal runnable happy path
+
+```java
+public class PostmanEchoSmokeTest extends BaseApiTest {
+    private EchoFlow echoFlow;
+
+    @BeforeClass(alwaysRun = true)
+    public void initFlow() {
+        this.echoFlow = new EchoFlow(new PostmanEchoApi(httpClient()));
+    }
+
+    @Test
+    public void shouldEchoQueryParameter() {
+        QueryRoundtripResult result = echoFlow.verifyQueryRoundtrip("suite", "smoke");
+        EchoAssertions.assertQueryRoundtrip(result);
+    }
+}
+```
+
+Expected Allure structure for this path:
+
+- `Flow: Verify query roundtrip`
+  - `Action: GET /get with query parameter`
+    - `GET /get -> 200` (from HTTP filter, with request/response/metadata attachments)
+  - `Assert: Verify transport success`
+- `Assert: Verify echoed query matches expected`
 
 ## Allure Reports
 
@@ -199,24 +264,4 @@ You can swap retry behavior without changing framework code:
 ```
 
 Both classes must implement `RetryPredicate` and `RetryDelayStrategy` respectively and have a no-arg constructor.
-
-## Sample Domain Architecture (without `@Step`)
-
-The sample module demonstrates `endpoint -> flow -> assertions` layering with framework executor-based steps:
-
-- Endpoint: `PostmanEchoApi` (transport only, no manual Allure calls),
-- Flow: `EchoFlow` (business orchestration),
-- Assertions: `EchoAssertions` (domain checks),
-- Executor: `AllureActionExecutor` (`action/assertion/composite`) for reusable step creation.
-
-```java
-QueryRoundtripResult result = echoFlow.verifyQueryRoundtrip("suite", "smoke");
-EchoAssertions.assertQueryRoundtrip(result);
-```
-
-Result in Allure:
-
-- flow-level step,
-- action/assertion sub-steps,
-- HTTP step per `httpClient.execute(...)` call with auto attachments.
 

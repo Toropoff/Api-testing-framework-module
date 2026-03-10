@@ -13,6 +13,14 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Map;
 
+/**
+ * Test lifecycle reporting listener for Allure.
+ * <p>
+ * Responsible for test-level labels, retry metadata, failure stacktrace and run summary.
+ * <p>
+ * Not responsible for per-request HTTP step creation or request/response attachments
+ * (these belong to the HTTP reporting filter layer).
+ */
 public final class AllureTestNgListener implements ITestListener {
     @Override
     public void onTestStart(ITestResult result) {
