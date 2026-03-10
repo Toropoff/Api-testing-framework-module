@@ -2,10 +2,10 @@ package com.apiframework.tests.integration;
 
 import com.apiframework.contracts.JsonSchemaContractValidator;
 import com.apiframework.contracts.snapshot.SnapshotContractChecker;
-import com.apiframework.core.model.ApiResponse;
 import com.apiframework.sampledomain.assertions.EchoAssertions;
 import com.apiframework.sampledomain.endpoint.PostmanEchoApi;
 import com.apiframework.sampledomain.flow.EchoFlow;
+import com.apiframework.sampledomain.flow.model.QueryRoundtripResult;
 import com.apiframework.sampledomain.model.EchoGetResponse;
 import com.apiframework.testng.base.BaseApiTest;
 import org.testng.SkipException;
@@ -32,10 +32,10 @@ public class OrderIntegrationTest extends BaseApiTest {
     @Test
     public void shouldMatchEchoGetContractAndSnapshot() {
         try {
-            ApiResponse<EchoGetResponse> response = echoFlow.verifyQueryRoundtrip("suite", "integration");
+            QueryRoundtripResult result = echoFlow.verifyQueryRoundtrip("suite", "integration");
 
-            EchoAssertions.assertGetEcho(response, "suite", "integration");
-            String contractBody = normalizedContractBody(response.body());
+            EchoAssertions.assertQueryRoundtrip(result);
+            String contractBody = normalizedContractBody(result.response().body());
             schemaValidator.assertMatchesSchema(contractBody, "schemas/postman-echo-get.schema.json");
             snapshotChecker.assertMatchesSnapshot("postman-echo-get", contractBody, false);
         } catch (Throwable ex) {

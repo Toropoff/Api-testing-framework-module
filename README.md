@@ -86,6 +86,23 @@ Examples:
 You can combine `-D` and `-P` in one command.
 
 
+
+### HTTP reporting is enabled by default via `BaseApiTest`
+
+Any test extending `BaseApiTest` automatically gets reporting-aware HTTP filter policy:
+
+- `framework.reporting.httpSteps.enabled=true` by default,
+- `framework.reporting.attachments.enabled=true` by default,
+- request/response/metadata attachments are generated in Allure per HTTP call,
+- can be turned off only via system properties:
+
+```bash
+-Dframework.reporting.httpSteps.enabled=false
+-Dframework.reporting.attachments.enabled=false
+```
+
+`BaseApiTest` still allows local override of `filterPolicy()` for special scenarios.
+
 ## Allure Reports
 
 The root project uses the Allure Gradle plugin configured via the Kotlin DSL `plugins {}` block.
@@ -181,3 +198,24 @@ You can swap retry behavior without changing framework code:
 ```
 
 Both classes must implement `RetryPredicate` and `RetryDelayStrategy` respectively and have a no-arg constructor.
+
+## Sample Domain Architecture (without `@Step`)
+
+The sample module demonstrates `endpoint -> flow -> assertions` layering with framework executor-based steps:
+
+- Endpoint: `PostmanEchoApi` (transport only, no manual Allure calls),
+- Flow: `EchoFlow` (business orchestration),
+- Assertions: `EchoAssertions` (domain checks),
+- Executor: `AllureActionExecutor` (`action/assertion/composite`) for reusable step creation.
+
+```java
+QueryRoundtripResult result = echoFlow.verifyQueryRoundtrip("suite", "smoke");
+EchoAssertions.assertQueryRoundtrip(result);
+```
+
+Result in Allure:
+
+- flow-level step,
+- action/assertion sub-steps,
+- HTTP step per `httpClient.execute(...)` call with auto attachments.
+
