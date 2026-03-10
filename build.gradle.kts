@@ -22,7 +22,15 @@ val aggregatedAllureResultsDir = layout.buildDirectory.dir("allure-results")
 val suiteAllureResultDirs = listOf(
     layout.projectDirectory.dir("test-suites/tests-smoke/allure-results"),
     layout.projectDirectory.dir("test-suites/tests-regression/allure-results"),
+<<<<<<< HEAD
     layout.projectDirectory.dir("test-suites/tests-integration/allure-results")
+=======
+    layout.projectDirectory.dir("test-suites/tests-integration/allure-results"),
+    // Backward compatibility for older local runs that still write into build/allure-results.
+    layout.projectDirectory.dir("test-suites/tests-smoke/build/allure-results"),
+    layout.projectDirectory.dir("test-suites/tests-regression/build/allure-results"),
+    layout.projectDirectory.dir("test-suites/tests-integration/build/allure-results")
+>>>>>>> 95a2660028ee82b161e89f93b3a09271a5741e1f
 )
 
 val allureSuiteTaskPaths = listOf(
@@ -34,6 +42,7 @@ val allureSuiteTaskPaths = listOf(
 tasks.register("collectAllureResults") {
     group = "verification"
     description = "Collects Allure results from test modules into build/allure-results"
+    mustRunAfter("runSuitesForAllure")
 
     doLast {
         val outputDir = aggregatedAllureResultsDir.get().asFile
