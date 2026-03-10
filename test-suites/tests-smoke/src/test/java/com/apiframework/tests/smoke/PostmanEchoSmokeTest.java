@@ -14,6 +14,7 @@ public class PostmanEchoSmokeTest extends BaseApiTest {
 
     @BeforeClass(alwaysRun = true)
     public void initFlow() {
+        super.initHttpClient();
         this.echoFlow = new EchoFlow(new PostmanEchoApi(httpClient()));
     }
 
