@@ -70,7 +70,12 @@ public abstract class BaseApiTest {
     }
 
     protected HttpFilterPolicy filterPolicy() {
-        return HttpFilterPolicy.defaultPolicy();
+        try {
+            Class<?> policiesClass = Class.forName("com.apiframework.reporting.allure.ReportingFilterPolicies");
+            return (HttpFilterPolicy) policiesClass.getMethod("withAllureAttachments").invoke(null);
+        } catch (Exception ignored) {
+            return HttpFilterPolicy.defaultPolicy();
+        }
     }
 
     protected boolean requiresLiveApi() {
