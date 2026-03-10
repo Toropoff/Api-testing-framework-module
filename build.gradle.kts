@@ -7,6 +7,10 @@ import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.gradle.jvm.toolchain.JavaLanguageVersion
 
+plugins {
+    id("io.qameta.allure") version "2.12.0"
+}
+
 allprojects {
     group = "com.apiframework"
     version = "0.1.0-SNAPSHOT"
