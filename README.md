@@ -91,9 +91,9 @@ You can combine `-D` and `-P` in one command.
 The root project uses the Allure Gradle plugin configured via the Kotlin DSL `plugins {}` block.
 Before report generation, root task `collectAllureResults` aggregates results from:
 
-- `test-suites/tests-smoke/build/allure-results`
-- `test-suites/tests-regression/build/allure-results`
-- `test-suites/tests-integration/build/allure-results`
+- `test-suites/tests-smoke/allure-results`
+- `test-suites/tests-regression/allure-results`
+- `test-suites/tests-integration/allure-results`
 
 into a single source directory:
 
