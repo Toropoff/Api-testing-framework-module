@@ -39,6 +39,23 @@ subprojects {
             showStackTraces = true
             showStandardStreams = false
         }
-        systemProperty("framework.profile", System.getProperty("framework.profile", "dev"))
+
+        // Automatically pass all CLI JVM properties (-D...) from Gradle invocation
+        // to the forked test JVMs.
+        systemProperties(gradle.startParameter.systemPropertiesArgs)
+
+        // Also pass selected Gradle project properties (-P...) used by the framework.
+        gradle.startParameter.projectProperties
+            .filterKeys { key ->
+                key.startsWith("framework.") || key.startsWith("test.") || key.startsWith("auth.")
+            }
+            .forEach { (key, value) ->
+                systemProperty(key, value)
+            }
+
+        // Keep sane default when profile is not passed from CLI.
+        if (!systemProperties.containsKey("framework.profile")) {
+            systemProperty("framework.profile", "dev")
+        }
     }
 }

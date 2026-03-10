@@ -49,6 +49,39 @@ Multi-module API test framework on Java 17 + Gradle + TestNG + Rest Assured with
   - auto-attachments for request/response,
   - masking for headers and body fields.
 
+## Running Tests
+
+### Quick start
+
+Run all tests:
+
+```bash
+./gradlew test
+```
+
+Run a specific suite module:
+
+```bash
+./gradlew :tests-smoke:test
+./gradlew :tests-regression:test
+./gradlew :tests-integration:test
+```
+
+### Automatic CLI parameter pickup
+
+Framework parameters passed from command line are now forwarded automatically into test JVMs.
+You can use either JVM properties (`-D`) or Gradle project properties (`-P`) with prefixes `framework.`, `test.`, `auth.`.
+
+Examples:
+
+```bash
+./gradlew :tests-smoke:test -Dframework.profile=stage -Dframework.runLiveTests=true
+./gradlew :tests-regression:test -Ptest.retry.maxAttempts=3 -Ptest.retry.delayMs=500
+./gradlew :tests-integration:test -Pauth.basic.username=my_user -Pauth.basic.password=my_pass
+```
+
+You can combine `-D` and `-P` in one command.
+
 ## Run Profiles and Secrets
 
 Active profile:
