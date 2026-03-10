@@ -9,7 +9,7 @@ import org.testng.SkipException;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-public class GoogleSearchSmokeTest extends BaseApiTest {
+public class PostmanEchoSmokeTest extends BaseApiTest {
     private EchoFlow echoFlow;
 
     @BeforeClass(alwaysRun = true)
@@ -22,10 +22,10 @@ public class GoogleSearchSmokeTest extends BaseApiTest {
         return true;
     }
 
-    @Test
-    public void shouldEchoTraceQueryParameter() {
+    @Test(description = "GET /get should echo query parameter")
+    public void shouldEchoQueryParameter() {
         try {
-            QueryRoundtripResult roundtrip = echoFlow.verifyQueryRoundtrip("trace", "google-replaced");
+            QueryRoundtripResult roundtrip = echoFlow.verifyQueryRoundtrip("suite", "smoke");
             EchoAssertions.assertQueryRoundtrip(roundtrip);
         } catch (Throwable ex) {
             throw new SkipException("Postman Echo is unavailable", ex);

@@ -9,10 +9,11 @@ import com.apiframework.testng.base.BaseApiTest;
 import com.apiframework.testng.retry.RetrySetting;
 import org.testng.SkipException;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 @RetrySetting(maxRetries = 2, delayMs = 200)
-public class OrderRegressionTest extends BaseApiTest {
+public class PostmanEchoRegressionTest extends BaseApiTest {
     private EchoFlow echoFlow;
 
     @BeforeClass(alwaysRun = true)
@@ -25,10 +26,17 @@ public class OrderRegressionTest extends BaseApiTest {
         return true;
     }
 
-    @Test
-    public void shouldEchoJsonPayloadOnPost() {
+    @DataProvider(name = "echoPayloads")
+    public Object[][] echoPayloads() {
+        return new Object[][]{
+            {new EchoPayload("order-regression", 42, true)},
+            {new EchoPayload("refund-regression", 7, false)}
+        };
+    }
+
+    @Test(dataProvider = "echoPayloads", description = "POST /post should echo json payload")
+    public void shouldEchoJsonPayloadOnPost(EchoPayload payload) {
         try {
-            EchoPayload payload = new EchoPayload("order-regression", 42, true);
             PayloadRoundtripResult result = echoFlow.sendPayloadAndVerifyRoundtrip(payload);
             EchoAssertions.assertPayloadRoundtrip(result);
         } catch (Throwable ex) {

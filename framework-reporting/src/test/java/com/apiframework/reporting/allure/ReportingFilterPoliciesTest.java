@@ -16,7 +16,7 @@ public class ReportingFilterPoliciesTest {
 
     @Test
     public void shouldEnableAllureHttpFilterByDefault() {
-        HttpFilterPolicy policy = ReportingFilterPolicies.withAllureAttachments();
+        HttpFilterPolicy policy = ReportingFilterPolicies.withAllureReporting();
 
         assertThat(policy.filters())
             .anyMatch(filter -> filter.getClass().equals(AllureHttpStepFilter.class));
@@ -26,7 +26,7 @@ public class ReportingFilterPoliciesTest {
     public void shouldDisableHttpStepFilterWhenPropertyIsFalse() {
         System.setProperty(ReportingFilterPolicies.HTTP_STEPS_ENABLED_PROPERTY, "false");
 
-        HttpFilterPolicy policy = ReportingFilterPolicies.withAllureAttachments();
+        HttpFilterPolicy policy = ReportingFilterPolicies.withAllureReporting();
 
         assertThat(policy.filters())
             .noneMatch(filter -> filter.getClass().equals(AllureHttpStepFilter.class));
@@ -36,7 +36,7 @@ public class ReportingFilterPoliciesTest {
     public void shouldRespectAttachmentPropertyWithoutRemovingHttpStepFilter() {
         System.setProperty(ReportingFilterPolicies.ATTACHMENTS_ENABLED_PROPERTY, "false");
 
-        HttpFilterPolicy policy = ReportingFilterPolicies.withAllureAttachments();
+        HttpFilterPolicy policy = ReportingFilterPolicies.withAllureReporting();
 
         Filter filter = policy.filters().stream()
             .filter(it -> it.getClass().equals(AllureHttpStepFilter.class))

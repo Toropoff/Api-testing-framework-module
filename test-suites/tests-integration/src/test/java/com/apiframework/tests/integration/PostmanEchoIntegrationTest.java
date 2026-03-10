@@ -12,7 +12,7 @@ import org.testng.SkipException;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-public class OrderIntegrationTest extends BaseApiTest {
+public class PostmanEchoIntegrationTest extends BaseApiTest {
     private EchoFlow echoFlow;
     private JsonSchemaContractValidator schemaValidator;
     private SnapshotContractChecker snapshotChecker;
@@ -29,7 +29,7 @@ public class OrderIntegrationTest extends BaseApiTest {
         return true;
     }
 
-    @Test
+    @Test(description = "GET /get should match schema and snapshot contract")
     public void shouldMatchEchoGetContractAndSnapshot() {
         try {
             QueryRoundtripResult result = echoFlow.verifyQueryRoundtrip("suite", "integration");
