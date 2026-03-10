@@ -91,26 +91,33 @@ You can combine `-D` and `-P` in one command.
 The root project uses the Allure Gradle plugin configured via the Kotlin DSL `plugins {}` block.
 Before report generation, root task `collectAllureResults` aggregates results from:
 
-- `test-suites/tests-smoke/build/allure-results`
-- `test-suites/tests-regression/build/allure-results`
-- `test-suites/tests-integration/build/allure-results`
+- `test-suites/tests-smoke/allure-results`
+- `test-suites/tests-regression/allure-results`
+- `test-suites/tests-integration/allure-results`
 
 into a single source directory:
 
 - `build/allure-results`
 
-`allureReport` depends on this aggregation step and builds HTML from the aggregated catalog.
+`allureReport` depends only on this aggregation step and builds HTML from the aggregated catalog.
 
-1) Run tests for all three modules:
+### Allure tasks in root project
 
-```bash
-./gradlew :test-suites:smoke:test :test-suites:regression:test :test-suites:integration:test
-```
+- `collectAllureResults` - collects existing results from suite modules into `build/allure-results`.
+- `runSuitesForAllure` - explicitly runs smoke/regression/integration tests to prepare fresh Allure results (for this flow suite tests are forced to execute, not taken from up-to-date cache).
+- `allureReport` - builds HTML report from already existing/collected results (does **not** run test suites by itself).
+- `allureReportWithTests` - orchestration task: runs `runSuitesForAllure` and then generates `allureReport`.
 
-2) Build one aggregated HTML report:
+1) Build aggregated HTML report from existing results:
 
 ```bash
 ./gradlew allureReport
+```
+
+2) Run all suites and then build aggregated report:
+
+```bash
+./gradlew allureReportWithTests
 ```
 
 Generated report path:
