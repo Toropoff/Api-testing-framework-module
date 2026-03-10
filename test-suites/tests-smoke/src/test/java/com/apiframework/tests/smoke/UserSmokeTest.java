@@ -1,10 +1,9 @@
 package com.apiframework.tests.smoke;
 
-import com.apiframework.core.model.ApiResponse;
 import com.apiframework.sampledomain.assertions.EchoAssertions;
 import com.apiframework.sampledomain.endpoint.PostmanEchoApi;
 import com.apiframework.sampledomain.flow.EchoFlow;
-import com.apiframework.sampledomain.model.EchoGetResponse;
+import com.apiframework.sampledomain.flow.model.QueryRoundtripResult;
 import com.apiframework.testng.base.BaseApiTest;
 import org.testng.SkipException;
 import org.testng.annotations.BeforeClass;
@@ -26,8 +25,8 @@ public class UserSmokeTest extends BaseApiTest {
     @Test
     public void shouldEchoQueryParameter() {
         try {
-            ApiResponse<EchoGetResponse> response = echoFlow.verifyQueryRoundtrip("suite", "smoke");
-            EchoAssertions.assertGetEcho(response, "suite", "smoke");
+            QueryRoundtripResult roundtrip = echoFlow.verifyQueryRoundtrip("suite", "smoke");
+            EchoAssertions.assertQueryRoundtrip(roundtrip);
         } catch (Throwable ex) {
             throw new SkipException("Postman Echo is unavailable", ex);
         }

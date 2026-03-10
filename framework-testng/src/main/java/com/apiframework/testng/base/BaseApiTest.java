@@ -69,11 +69,17 @@ public abstract class BaseApiTest {
         return AuthStrategy.none();
     }
 
+    /**
+     * Default policy for all descendants: reporting-aware HTTP filters via framework-reporting.
+     *
+     * Can be overridden in a specific test class for a custom filter pipeline.
+     */
     protected HttpFilterPolicy filterPolicy() {
         try {
             Class<?> policiesClass = Class.forName("com.apiframework.reporting.allure.ReportingFilterPolicies");
             return (HttpFilterPolicy) policiesClass.getMethod("withAllureAttachments").invoke(null);
         } catch (Exception ignored) {
+            // Safety fallback for scenarios where framework-reporting is intentionally absent from classpath.
             return HttpFilterPolicy.defaultPolicy();
         }
     }
