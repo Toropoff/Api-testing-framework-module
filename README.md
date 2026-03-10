@@ -86,16 +86,25 @@ You can combine `-D` and `-P` in one command.
 ## Allure Reports
 
 The root project uses the Allure Gradle plugin configured via the Kotlin DSL `plugins {}` block.
+Before report generation, root task `collectAllureResults` aggregates results from:
 
-1) Run tests (one module or all):
+- `tests-smoke/build/allure-results`
+- `tests-regression/build/allure-results`
+- `tests-integration/build/allure-results`
+
+into a single source directory:
+
+- `build/allure-results`
+
+`allureReport` depends on this aggregation step and builds HTML from the aggregated catalog.
+
+1) Run tests for all three modules:
 
 ```bash
-gradle :tests-smoke:test
-gradle :tests-regression:test
-gradle :tests-integration:test
+gradle :tests-smoke:test :tests-regression:test :tests-integration:test
 ```
 
-2) Build a single HTML report from collected results:
+2) Build one aggregated HTML report:
 
 ```bash
 gradle allureReport
