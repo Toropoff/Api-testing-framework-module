@@ -5,6 +5,7 @@ import org.gradle.api.tasks.testing.Test
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.gradle.jvm.toolchain.JavaLanguageVersion
+import io.qameta.allure.gradle.report.tasks.AllureReport
 
 plugins {
     id("io.qameta.allure") version "3.0.1"
@@ -20,7 +21,40 @@ allprojects {
 }
 
 
-tasks.named("allureReport") {
+val aggregatedAllureResults by configurations.creating
+
+dependencies {
+    add(aggregatedAllureResults.name, files(layout.buildDirectory.dir("allure-results")))
+}
+
+val collectAllureResults by tasks.registering(Copy::class) {
+    group = "verification"
+    description = "Collects Allure results from test modules into a single root directory"
+
+    val aggregatedResultsDir = layout.buildDirectory.dir("allure-results")
+    into(aggregatedResultsDir)
+
+    from(layout.projectDirectory.dir("tests-smoke/build/allure-results"))
+    from(layout.projectDirectory.dir("tests-regression/build/allure-results"))
+    from(layout.projectDirectory.dir("tests-integration/build/allure-results"))
+
+    includeEmptyDirs = false
+
+    dependsOn(
+        ":tests-smoke:test",
+        ":tests-regression:test",
+        ":tests-integration:test"
+    )
+
+    doFirst {
+        delete(aggregatedResultsDir)
+    }
+}
+
+tasks.named<AllureReport>("allureReport") {
+    dependsOn(collectAllureResults)
+    resultsDirs.set(aggregatedAllureResults)
+
     doFirst {
         delete(layout.buildDirectory.dir("reports/allure-report/allureReport"))
     }
