@@ -118,5 +118,3 @@ Environment secret convention (`EnvSecretsProvider`):
 ## Notes
 
 - Oracle and RabbitMQ modules are implemented as reusable adapters and require runtime infra credentials/hosts.
-- Snapshot baseline example is stored in `framework-contracts/src/main/resources/snapshots/order-response.json`.
-- Current workspace did not have Java/Gradle binaries available, so compile/test execution was not run in this environment.
