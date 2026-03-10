@@ -8,6 +8,7 @@
     <test name="Smoke API Tests">
         <classes>
             <class name="com.apiframework.tests.smoke.UserSmokeTest"/>
+            <class name="com.apiframework.tests.smoke.GoogleSearchSmokeTest"/>
         </classes>
     </test>
 </suite>
