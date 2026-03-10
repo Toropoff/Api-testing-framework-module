@@ -29,7 +29,7 @@ public final class RequestResponseLoggingFilter implements Filter {
                 LinkedHashMap::new
             ));
 
-        String requestBody = requestSpec.getBody() == null ? "" : String.valueOf(requestSpec.getBody());
+        String requestBody = safeRequestBody(requestSpec);
         LOGGER.info("Request: {} {} headers={} body={}",
             requestSpec.getMethod(),
             requestSpec.getURI(),
@@ -55,5 +55,15 @@ public final class RequestResponseLoggingFilter implements Filter {
         );
 
         return response;
+    }
+
+    private static String safeRequestBody(FilterableRequestSpecification requestSpec) {
+        try {
+            Object body = requestSpec.getBody();
+            return body == null ? "" : String.valueOf(body);
+        } catch (ClassCastException ex) {
+            LOGGER.warn("Unable to read request body for logging due to incompatible body type", ex);
+            return "<unavailable>";
+        }
     }
 }

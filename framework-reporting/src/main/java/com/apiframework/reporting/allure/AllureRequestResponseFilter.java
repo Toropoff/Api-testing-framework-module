@@ -26,7 +26,7 @@ public final class AllureRequestResponseFilter implements Filter {
                 (first, second) -> second,
                 LinkedHashMap::new
             ));
-        String requestBody = requestSpec.getBody() == null ? "" : String.valueOf(requestSpec.getBody());
+        String requestBody = safeRequestBody(requestSpec);
 
         Allure.addAttachment(
             "HTTP Request",
@@ -54,6 +54,15 @@ public final class AllureRequestResponseFilter implements Filter {
         );
 
         return response;
+    }
+
+    private String safeRequestBody(FilterableRequestSpecification requestSpec) {
+        try {
+            Object body = requestSpec.getBody();
+            return body == null ? "" : String.valueOf(body);
+        } catch (ClassCastException ex) {
+            return "<unavailable>";
+        }
     }
 
     private String formatRequest(String method, String uri, Map<String, String> headers, String body) {
