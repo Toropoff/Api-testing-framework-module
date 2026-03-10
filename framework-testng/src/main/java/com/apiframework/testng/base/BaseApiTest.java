@@ -89,7 +89,14 @@ public abstract class BaseApiTest {
     }
 
     protected <T> T api(Function<HttpClient, T> apiFactory) {
-        return apiFactory.apply(httpClient);
+        return apiFactory.apply(httpClient());
+    }
+
+    protected HttpClient httpClient() {
+        if (httpClient == null) {
+            initHttpClient();
+        }
+        return httpClient;
     }
 
     protected Map<String, String> environmentTags() {

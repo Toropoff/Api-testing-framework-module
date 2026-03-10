@@ -19,7 +19,7 @@ public class PostmanEchoIntegrationTest extends BaseApiTest {
 
     @BeforeClass(alwaysRun = true)
     public void initDependencies() {
-        this.echoFlow = new EchoFlow(new PostmanEchoApi(httpClient));
+        this.echoFlow = new EchoFlow(new PostmanEchoApi(httpClient()));
         this.schemaValidator = new JsonSchemaContractValidator();
         this.snapshotChecker = SnapshotContractChecker.defaultChecker();
     }
