@@ -1,1 +1,89 @@
-# Api-testing-framework
+# REST API Test Framework (Monorepo)
+
+Multi-module API test framework on Java 17 + Gradle + TestNG + Rest Assured with DTO-first, API POM, centralized retry, reporting, and integration adapters.
+
+## Modules
+
+- `framework-core` - HTTP abstraction, request/response model, auth strategies, profile config, secrets providers, filters and masking, error model.
+- `framework-api-model` - DTOs, endpoint objects, flow objects, domain assertions.
+- `framework-testng` - base test classes, retry analyzer, listeners, soft assertions, data providers.
+- `framework-db-oracle` - Oracle datasource + jOOQ repositories + await helpers.
+- `framework-messaging-rabbitmq` - message bus abstraction, RabbitMQ publish/consume, correlation-id checks, await helpers.
+- `framework-contracts` - JSON schema validation, JsonUnit assertions, snapshot checks.
+- `framework-reporting` - Allure TestNG listener + request/response attachments with masking.
+- `tests-smoke` - smoke suite examples.
+- `tests-regression` - regression suite examples.
+- `tests-integration` - integration suite examples.
+
+## Key Patterns Implemented
+
+- TestNG centralized retry (`FrameworkRetryAnalyzer`) with:
+  - global policy via JVM props (`test.retry.maxAttempts`, `test.retry.delayMs`),
+  - custom policy via `@RetrySetting` on class/method,
+  - attempt logging and flaky report (`RetryReportingListener`).
+- API POM:
+  - Endpoint Objects (`AuthApi`, `UserApi`, `OrderApi`),
+  - Flow Objects (`RegistrationFlow`, `OrderPlacementFlow`),
+  - Assertion Helpers (`UserAssertions`, `OrderAssertions`).
+- DTO-first across requests/responses.
+- Auth strategies:
+  - `BasicAuthStrategy`,
+  - `OAuth2ClientCredentialsStrategy`,
+  - `OAuth2PasswordStrategy` with thread-safe token cache, TTL-aware refresh and 401 fallback refresh.
+- Config and secrets:
+  - profiles (`dev/stage/prod`),
+  - `EnvSecretsProvider`,
+  - `VaultSecretsProvider`,
+  - centralized resolver `ConfigResolver`.
+- Unified HTTP filters:
+  - request/response logging,
+  - correlation-id,
+  - timing,
+  - sensitive masking.
+- Contracts and snapshots:
+  - JSON schema (`JsonSchemaContractValidator`),
+  - JsonUnit assertions,
+  - snapshot checker (`SnapshotContractChecker`).
+- Reporting:
+  - Allure TestNG listener,
+  - auto-attachments for request/response,
+  - masking for headers and body fields.
+
+## Run Profiles and Secrets
+
+Active profile:
+
+```bash
+-Dframework.profile=dev|stage|prod
+```
+
+Live API tests are disabled by default. Enable explicitly:
+
+```bash
+-Dframework.runLiveTests=true
+```
+
+Global retry policy:
+
+```bash
+-Dtest.retry.maxAttempts=2 -Dtest.retry.delayMs=500
+```
+
+Environment secret convention (`EnvSecretsProvider`):
+
+- `FRAMEWORK_SECRET_AUTH_BASIC_USERNAME`
+- `FRAMEWORK_SECRET_AUTH_BASIC_PASSWORD`
+- `FRAMEWORK_SECRET_AUTH_OAUTH2_CLIENTSECRET`
+- etc.
+
+## Suite Entry Points
+
+- Smoke: `tests-smoke/src/test/resources/testng-smoke.xml`
+- Regression: `tests-regression/src/test/resources/testng-regression.xml`
+- Integration: `tests-integration/src/test/resources/testng-integration.xml`
+
+## Notes
+
+- Oracle and RabbitMQ modules are implemented as reusable adapters and require runtime infra credentials/hosts.
+- Snapshot baseline example is stored in `framework-contracts/src/main/resources/snapshots/order-response.json`.
+- Current workspace did not have Java/Gradle binaries available, so compile/test execution was not run in this environment.
