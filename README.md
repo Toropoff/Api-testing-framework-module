@@ -1,12 +1,11 @@
 # REST API Test Framework (Monorepo)
 
-Multi-module API test framework on Java 21 + Gradle + TestNG + Rest Assured with DTO-first, API POM, centralized retry, reporting, and integration adapters.
+Multi-module API test framework on Java 21 + Gradle + TestNG + Rest Assured with API POM, centralized retry, reporting, and integration adapters.
 
 ## Modules
 
 - `framework-core` - HTTP abstraction, request/response model, auth strategies, profile config, secrets providers, filters and masking, error model.
-- `framework-api-model` - DTOs and transport models only (framework-level abstractions).
-- `examples/sample-domain` - sample domain API POM (`AuthApi`, `UserApi`, `OrderApi`), flows, and assertions.
+- `examples/sample-domain` - sample domain for Postman Echo (`endpoint`, `flow`, `assertions`, `model`).
 - `framework-testng` - base test classes, retry analyzer, listeners, soft assertions, data providers.
 - `framework-db-oracle` - Oracle datasource + jOOQ repositories + await helpers.
 - `framework-messaging-rabbitmq` - message bus abstraction, RabbitMQ publish/consume, correlation-id checks, await helpers.
@@ -24,10 +23,10 @@ Multi-module API test framework on Java 21 + Gradle + TestNG + Rest Assured with
   - custom policy via `@RetrySetting` on class/method,
   - attempt logging and flaky report (`RetryReportingListener`).
 - API POM:
-  - Endpoint Objects (`AuthApi`, `UserApi`, `OrderApi`),
-  - Flow Objects (`RegistrationFlow`, `OrderPlacementFlow`),
-  - Assertion Helpers (`UserAssertions`, `OrderAssertions`).
-- DTO-first across requests/responses.
+  - Endpoint Objects (`PostmanEchoApi`),
+  - Flow Objects (`EchoFlow`),
+  - Assertion Helpers (`EchoAssertions`).
+- Domain DTOs are kept in `examples/sample-domain/model` to avoid coupling framework-core to a specific API.
 - Auth strategies:
   - `BasicAuthStrategy`,
   - `OAuth2ClientCredentialsStrategy`,
@@ -164,3 +163,14 @@ Environment secret convention (`EnvSecretsProvider`):
 ## Notes
 
 - Oracle and RabbitMQ modules are implemented as reusable adapters and require runtime infra credentials/hosts.
+
+## Retry Extensions (Pluggable)
+
+You can swap retry behavior without changing framework code:
+
+```bash
+-Dtest.retry.predicateClass=com.example.CustomRetryPredicate
+-Dtest.retry.delayStrategyClass=com.example.ExponentialBackoffDelayStrategy
+```
+
+Both classes must implement `RetryPredicate` and `RetryDelayStrategy` respectively and have a no-arg constructor.

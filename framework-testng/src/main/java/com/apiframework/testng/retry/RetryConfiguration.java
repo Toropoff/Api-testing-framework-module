@@ -1,6 +1,9 @@
 package com.apiframework.testng.retry;
 
 public final class RetryConfiguration {
+    private static final String PREDICATE_CLASS_PROPERTY = "test.retry.predicateClass";
+    private static final String DELAY_STRATEGY_CLASS_PROPERTY = "test.retry.delayStrategyClass";
+
     private RetryConfiguration() {
     }
 
@@ -13,10 +16,35 @@ public final class RetryConfiguration {
     }
 
     public static RetryPredicate retryPredicate() {
-        return new DefaultRetryPredicate();
+        return instantiate(
+            System.getProperty(PREDICATE_CLASS_PROPERTY),
+            RetryPredicate.class,
+            DefaultRetryPredicate::new
+        );
     }
 
     public static RetryDelayStrategy retryDelayStrategy() {
-        return new FixedRetryDelayStrategy();
+        return instantiate(
+            System.getProperty(DELAY_STRATEGY_CLASS_PROPERTY),
+            RetryDelayStrategy.class,
+            FixedRetryDelayStrategy::new
+        );
+    }
+
+    private static <T> T instantiate(String configuredClassName, Class<T> expectedType, java.util.function.Supplier<T> fallback) {
+        if (configuredClassName == null || configuredClassName.isBlank()) {
+            return fallback.get();
+        }
+
+        try {
+            Class<?> loadedClass = Class.forName(configuredClassName);
+            if (!expectedType.isAssignableFrom(loadedClass)) {
+                throw new IllegalArgumentException("Class " + configuredClassName + " must implement " + expectedType.getName());
+            }
+            Object instance = loadedClass.getDeclaredConstructor().newInstance();
+            return expectedType.cast(instance);
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to instantiate retry extension: " + configuredClassName, e);
+        }
     }
 }

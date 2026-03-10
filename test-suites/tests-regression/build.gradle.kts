@@ -1,7 +1,5 @@
 dependencies {
     testImplementation(project(":framework-suite-support"))
-    testImplementation(project(":framework-db-oracle"))
-    testImplementation(project(":framework-messaging-rabbitmq"))
 }
 
 tasks.test {

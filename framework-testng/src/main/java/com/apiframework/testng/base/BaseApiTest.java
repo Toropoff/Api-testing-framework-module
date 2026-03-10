@@ -19,7 +19,6 @@ import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
-
 import java.util.function.Function;
 
 public abstract class BaseApiTest {
@@ -36,6 +35,10 @@ public abstract class BaseApiTest {
 
     @BeforeClass(alwaysRun = true)
     public void initHttpClient() {
+        if (runtimeConfig == null) {
+            initRuntimeConfig();
+        }
+
         if (requiresLiveApi() && !Boolean.parseBoolean(System.getProperty("framework.runLiveTests", "false"))) {
             throw new SkipException("Live API tests are disabled. Set -Dframework.runLiveTests=true");
         }
@@ -71,7 +74,7 @@ public abstract class BaseApiTest {
     }
 
     protected boolean requiresLiveApi() {
-        return true;
+        return false;
     }
 
     protected <T> T api(Function<HttpClient, T> apiFactory) {
@@ -81,6 +84,7 @@ public abstract class BaseApiTest {
     protected Map<String, String> environmentTags() {
         Map<String, String> tags = new LinkedHashMap<>();
         tags.put("profile", runtimeConfig.profile().name());
+        tags.put("baseUrl", runtimeConfig.baseUrl());
         tags.put("liveTests", System.getProperty("framework.runLiveTests", "false"));
         return tags;
     }
