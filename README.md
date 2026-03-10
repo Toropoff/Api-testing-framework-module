@@ -27,6 +27,7 @@ Multi-module API test framework on Java 21 + Gradle + TestNG + Rest Assured with
   - Flow Objects (`EchoFlow`),
   - Assertion Helpers (`EchoAssertions`).
 - Domain DTOs are kept in `examples/sample-domain/model` to avoid coupling framework-core to a specific API.
+- `framework-api-model` is intentionally **not** a separate module: DTO/transport models stay inside each concrete domain (for example, `examples/sample-domain/model`) and do not mix with framework-core.
 - Auth strategies:
   - `BasicAuthStrategy`,
   - `OAuth2ClientCredentialsStrategy`,
@@ -108,9 +109,9 @@ Any test extending `BaseApiTest` automatically gets reporting-aware HTTP filter 
 The root project uses the Allure Gradle plugin configured via the Kotlin DSL `plugins {}` block.
 Before report generation, root task `collectAllureResults` aggregates results from:
 
-- `test-suites/tests-smoke/allure-results`
-- `test-suites/tests-regression/allure-results`
-- `test-suites/tests-integration/allure-results`
+- `test-suites/tests-smoke/build/allure-results`
+- `test-suites/tests-regression/build/allure-results`
+- `test-suites/tests-integration/build/allure-results`
 
 into a single source directory:
 

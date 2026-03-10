@@ -14,14 +14,14 @@ public final class PostmanEchoApi extends BaseApiEndpoint {
     }
 
     public ApiResponse<EchoGetResponse> getEcho(String key, String value) {
-        ApiRequest<Void> request = ApiRequest.<Void>builder(HttpMethod.GET, "/get")
+        ApiRequest<Void> request = ApiRequest.<Void>builder(HttpMethod.GET, PostmanEchoRoute.GET_ECHO.path())
             .queryParam(key, value)
             .build();
         return httpClient.execute(request, EchoGetResponse.class);
     }
 
     public ApiResponse<EchoPostResponse> postEcho(EchoPayload payload) {
-        ApiRequest<EchoPayload> request = ApiRequest.<EchoPayload>builder(HttpMethod.POST, "/post")
+        ApiRequest<EchoPayload> request = ApiRequest.<EchoPayload>builder(HttpMethod.POST, PostmanEchoRoute.POST_ECHO.path())
             .body(payload)
             .build();
         return httpClient.execute(request, EchoPostResponse.class);
