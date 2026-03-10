@@ -6,6 +6,7 @@ include(
     "framework-testng",
     "framework-db-oracle",
     "framework-messaging-rabbitmq",
+    "framework-splunk",
     "framework-contracts",
     "framework-reporting",
     "tests-smoke",
