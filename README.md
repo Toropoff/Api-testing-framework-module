@@ -82,6 +82,39 @@ Examples:
 
 You can combine `-D` and `-P` in one command.
 
+
+## Allure Reports
+
+The root project uses the Allure Gradle plugin and provides aggregated report generation across test modules.
+
+1) Run tests (one module or all):
+
+```bash
+gradle :tests-smoke:test
+gradle :tests-regression:test
+gradle :tests-integration:test
+```
+
+2) Build a single HTML report from collected results:
+
+```bash
+gradle allureReport
+```
+
+Generated report path:
+
+- `build/reports/allure-report/allureReport/index.html`
+
+3) Open report locally with temporary web server:
+
+```bash
+gradle allureServe
+```
+
+Notes:
+- Task `aggregateAllureResults` collects results from `tests-*/build/allure-results` and legacy `tests-*/allure-results` locations.
+- If tests are skipped (for example, live API disabled), Allure still generates a report with skipped status.
+
 ## Run Profiles and Secrets
 
 Active profile:
