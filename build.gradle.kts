@@ -40,24 +40,41 @@ val collectAllureResults by tasks.registering(Copy::class) {
 
     includeEmptyDirs = false
 
-    dependsOn(
-        ":test-suites:smoke:test",
-        ":test-suites:regression:test",
-        ":test-suites:integration:test"
-    )
-
     doFirst {
         delete(aggregatedResultsDir)
     }
 }
 
-tasks.named<AllureReport>("allureReport") {
+val runSuitesForAllure by tasks.registering {
+    group = "verification"
+    description = "Runs smoke, regression and integration suites to prepare Allure results"
+
+    dependsOn(
+        ":test-suites:smoke:test",
+        ":test-suites:regression:test",
+        ":test-suites:integration:test"
+    )
+}
+
+val allureReportTask = tasks.named<AllureReport>("allureReport") {
     dependsOn(collectAllureResults)
     resultsDirs.set(aggregatedAllureResults)
 
     doFirst {
         delete(layout.buildDirectory.dir("reports/allure-report/allureReport"))
     }
+}
+
+allureReportTask.configure {
+    mustRunAfter(runSuitesForAllure)
+}
+
+tasks.register("allureReportWithTests") {
+    group = "verification"
+    description = "Runs all suites and then builds the aggregated Allure report"
+
+    dependsOn(runSuitesForAllure)
+    dependsOn(allureReportTask)
 }
 
 subprojects {
