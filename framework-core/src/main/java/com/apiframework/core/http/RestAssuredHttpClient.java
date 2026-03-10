@@ -88,11 +88,11 @@ public final class RestAssuredHttpClient implements HttpClient {
         }
 
         return switch (request.method()) {
-            case HttpMethod.GET -> specification.get(request.path());
-            case HttpMethod.POST -> specification.post(request.path());
-            case HttpMethod.PUT -> specification.put(request.path());
-            case HttpMethod.PATCH -> specification.patch(request.path());
-            case HttpMethod.DELETE -> specification.delete(request.path());
+            case GET -> specification.get(request.path());
+            case POST -> specification.post(request.path());
+            case PUT -> specification.put(request.path());
+            case PATCH -> specification.patch(request.path());
+            case DELETE -> specification.delete(request.path());
         };
     }
 
