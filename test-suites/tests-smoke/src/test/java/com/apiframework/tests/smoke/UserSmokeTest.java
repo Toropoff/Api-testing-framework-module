@@ -1,8 +1,6 @@
 package com.apiframework.tests.smoke;
 
-import com.apiframework.core.filter.HttpFilterPolicy;
 import com.apiframework.core.model.ApiResponse;
-import com.apiframework.reporting.allure.ReportingFilterPolicies;
 import com.apiframework.sampledomain.assertions.EchoAssertions;
 import com.apiframework.sampledomain.endpoint.PostmanEchoApi;
 import com.apiframework.sampledomain.flow.EchoFlow;
@@ -18,11 +16,6 @@ public class UserSmokeTest extends BaseApiTest {
     @BeforeClass(alwaysRun = true)
     public void initFlow() {
         this.echoFlow = new EchoFlow(new PostmanEchoApi(httpClient));
-    }
-
-    @Override
-    protected HttpFilterPolicy filterPolicy() {
-        return ReportingFilterPolicies.withAllureAttachments();
     }
 
     @Override
