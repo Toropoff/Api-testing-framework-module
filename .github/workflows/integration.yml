@@ -3,6 +3,9 @@ name: Integration API Tests
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   integration:
     runs-on: ubuntu-latest
@@ -13,5 +16,28 @@ jobs:
           distribution: temurin
           java-version: '21'
       - uses: gradle/actions/setup-gradle@v3
+
       - name: Run integration suite
         run: ./gradlew :test-suites:integration:test -Dframework.profile=stage -Dframework.runLiveTests=true
+
+      - name: Build Allure report
+        if: always()
+        run: ./gradlew allureReport
+
+      - name: Upload Allure report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-integration-report
+          path: build/reports/allure-report/allureReport
+          if-no-files-found: warn
+
+      - name: Publish Allure report to GitHub Pages
+        if: always()
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: build/reports/allure-report/allureReport
+          destination_dir: allure/integration
+          keep_files: true
