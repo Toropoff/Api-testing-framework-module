@@ -6,13 +6,25 @@ on:
     - cron: '0 2 * * *'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   regression:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Restore regression history from latest regression artifact
+        continue-on-error: true
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          workflow: regression.yml
+          workflow_conclusion: success
+          branch: main
+          name: site-allure-regression
+          path: .history/regression
+          if_no_artifact_found: warn
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -22,24 +34,28 @@ jobs:
       - name: Run regression suite
         run: ./gradlew :test-suites:regression:test -Dframework.profile=stage -Dframework.runLiveTests=true -Dtest.retry.maxRetries=1
 
+      - name: Inject regression history
+        if: always()
+        run: |
+          mkdir -p build/allure-results
+          if [ -d ".history/regression/history" ]; then
+            cp -R .history/regression/history build/allure-results/history
+          fi
+
       - name: Build Allure report
         if: always()
         run: ./gradlew allureReport
 
-      - name: Upload Allure report artifact
+      - name: Package regression site artifact
+        if: always()
+        run: |
+          mkdir -p site/allure/regression
+          cp -R build/reports/allure-report/allureReport/. site/allure/regression/
+
+      - name: Upload regression site artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: allure-regression-report
-          path: build/reports/allure-report/allureReport
+          name: site-allure-regression
+          path: site/allure/regression
           if-no-files-found: warn
-
-      - name: Publish Allure report to GitHub Pages
-        if: always()
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: gh-pages
-          publish_dir: build/reports/allure-report/allureReport
-          destination_dir: allure/regression
-          keep_files: true
