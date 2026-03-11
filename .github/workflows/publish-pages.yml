@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write # Нужно для доступа к ветке gh-pages
   actions: read
   pages: write
   id-token: write
@@ -20,23 +20,36 @@ jobs:
           java-version: '21'
       - uses: gradle/actions/setup-gradle@v3
 
+      # Загружаем историю из предыдущего прогона для трендов
+      - name: Load history
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          ref: gh-pages
+          path: gh-pages-prev
+
       - name: Run smoke suite
         run: ./gradlew :test-suites:smoke:test -Dframework.profile=dev -Dframework.runLiveTests=true
+
+      - name: Prepare Allure results
+        run: |
+          mkdir -p build/allure-results/history
+          cp -r gh-pages-prev/allure/smoke/history/* build/allure-results/history/ || true
 
       - name: Build smoke Allure report
         run: ./gradlew allureReport
 
       - name: Package smoke site artifact
         run: |
-          mkdir -p site/allure/smoke
-          cp -R build/reports/allure-report/allureReport/. site/allure/smoke/
+          mkdir -p site-to-upload
+          cp -R build/reports/allure-report/allureReport/. site-to-upload/
 
       - name: Upload smoke site artifact
         uses: actions/upload-artifact@v4
         with:
           name: site-allure-smoke
-          path: site/allure/smoke
-          if-no-files-found: warn
+          path: site-to-upload
+          if-no-files-found: error
 
   regression:
     runs-on: ubuntu-latest
@@ -48,23 +61,35 @@ jobs:
           java-version: '21'
       - uses: gradle/actions/setup-gradle@v3
 
+      - name: Load history
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          ref: gh-pages
+          path: gh-pages-prev
+
       - name: Run regression suite
         run: ./gradlew :test-suites:regression:test -Dframework.profile=stage -Dframework.runLiveTests=true -Dtest.retry.maxRetries=1
+
+      - name: Prepare Allure results
+        run: |
+          mkdir -p build/allure-results/history
+          cp -r gh-pages-prev/allure/regression/history/* build/allure-results/history/ || true
 
       - name: Build regression Allure report
         run: ./gradlew allureReport
 
       - name: Package regression site artifact
         run: |
-          mkdir -p site/allure/regression
-          cp -R build/reports/allure-report/allureReport/. site/allure/regression/
+          mkdir -p site-to-upload
+          cp -R build/reports/allure-report/allureReport/. site-to-upload/
 
       - name: Upload regression site artifact
         uses: actions/upload-artifact@v4
         with:
           name: site-allure-regression
-          path: site/allure/regression
-          if-no-files-found: warn
+          path: site-to-upload
+          if-no-files-found: error
 
   integration:
     runs-on: ubuntu-latest
@@ -76,31 +101,43 @@ jobs:
           java-version: '21'
       - uses: gradle/actions/setup-gradle@v3
 
+      - name: Load history
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          ref: gh-pages
+          path: gh-pages-prev
+
       - name: Run integration suite
         run: ./gradlew :test-suites:integration:test -Dframework.profile=stage -Dframework.runLiveTests=true
+
+      - name: Prepare Allure results
+        run: |
+          mkdir -p build/allure-results/history
+          cp -r gh-pages-prev/allure/integration/history/* build/allure-results/history/ || true
 
       - name: Build integration Allure report
         run: ./gradlew allureReport
 
       - name: Package integration site artifact
         run: |
-          mkdir -p site/allure/integration
-          cp -R build/reports/allure-report/allureReport/. site/allure/integration/
+          mkdir -p site-to-upload
+          cp -R build/reports/allure-report/allureReport/. site-to-upload/
 
       - name: Upload integration site artifact
         uses: actions/upload-artifact@v4
         with:
           name: site-allure-integration
-          path: site/allure/integration
-          if-no-files-found: warn
+          path: site-to-upload
+          if-no-files-found: error
 
   publish-pages:
-    needs:
-      - smoke
-      - regression
-      - integration
+    needs: [smoke, regression, integration]
     runs-on: ubuntu-latest
     steps:
+      - name: Create site structure
+        run: mkdir -p site/allure/smoke site/allure/regression site/allure/integration
+
       - name: Download smoke artifact
         uses: actions/download-artifact@v4
         with:
@@ -121,28 +158,24 @@ jobs:
 
       - name: Create root landing page
         run: |
-          mkdir -p site
           cat <<'HTML' > site/index.html
           <!doctype html>
           <html lang="en">
           <head>
             <meta charset="utf-8" />
-            <meta name="viewport" content="width=device-width, initial-scale=1" />
             <title>API Test Reports</title>
+            <style>body { font-family: sans-serif; padding: 20px; }</style>
           </head>
           <body>
-            <h1>Allure reports</h1>
+            <h1>Allure Test Reports</h1>
             <ul>
-              <li><a href="./allure/smoke/">Smoke</a></li>
-              <li><a href="./allure/regression/">Regression</a></li>
-              <li><a href="./allure/integration/">Integration</a></li>
+              <li><a href="allure/smoke/">Smoke Suite</a></li>
+              <li><a href="allure/regression/">Regression Suite</a></li>
+              <li><a href="allure/integration/">Integration Suite</a></li>
             </ul>
           </body>
           </html>
           HTML
-
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
