@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write # Нужно для доступа к ветке gh-pages
+  contents: read
   actions: read
   pages: write
   id-token: write
@@ -20,21 +20,27 @@ jobs:
           java-version: '21'
       - uses: gradle/actions/setup-gradle@v3
 
-      # Загружаем историю из предыдущего прогона для трендов
-      - name: Load history
-        uses: actions/checkout@v4
+      # 1. Скачиваем историю из ПРЕДЫДУЩЕГО запуска этого же воркфлоу
+      - name: Download previous history
+        uses: dawidd6/action-download-artifact@v6
         continue-on-error: true
         with:
-          ref: gh-pages
-          path: gh-pages-prev
+          workflow: ${{ github.event.workflow.path }} # Автоматически берет текущий файл
+          name: site-allure-smoke
+          path: prev-report
+          search_artifacts: true
 
       - name: Run smoke suite
         run: ./gradlew :test-suites:smoke:test -Dframework.profile=dev -Dframework.runLiveTests=true
+        continue-on-error: true
 
+      # 2. Переносим историю в результаты ДО генерации отчета
       - name: Prepare Allure results
         run: |
           mkdir -p build/allure-results/history
-          cp -r gh-pages-prev/allure/smoke/history/* build/allure-results/history/ || true
+          if [ -d "prev-report/history" ]; then
+            cp -R prev-report/history/* build/allure-results/history/
+          fi
 
       - name: Build smoke Allure report
         run: ./gradlew allureReport
@@ -49,7 +55,6 @@ jobs:
         with:
           name: site-allure-smoke
           path: site-to-upload
-          if-no-files-found: error
 
   regression:
     runs-on: ubuntu-latest
@@ -61,20 +66,25 @@ jobs:
           java-version: '21'
       - uses: gradle/actions/setup-gradle@v3
 
-      - name: Load history
-        uses: actions/checkout@v4
+      - name: Download previous history
+        uses: dawidd6/action-download-artifact@v6
         continue-on-error: true
         with:
-          ref: gh-pages
-          path: gh-pages-prev
+          workflow: ${{ github.event.workflow.path }}
+          name: site-allure-regression
+          path: prev-report
+          search_artifacts: true
 
       - name: Run regression suite
         run: ./gradlew :test-suites:regression:test -Dframework.profile=stage -Dframework.runLiveTests=true -Dtest.retry.maxRetries=1
+        continue-on-error: true
 
       - name: Prepare Allure results
         run: |
           mkdir -p build/allure-results/history
-          cp -r gh-pages-prev/allure/regression/history/* build/allure-results/history/ || true
+          if [ -d "prev-report/history" ]; then
+            cp -R prev-report/history/* build/allure-results/history/
+          fi
 
       - name: Build regression Allure report
         run: ./gradlew allureReport
@@ -89,7 +99,6 @@ jobs:
         with:
           name: site-allure-regression
           path: site-to-upload
-          if-no-files-found: error
 
   integration:
     runs-on: ubuntu-latest
@@ -101,20 +110,25 @@ jobs:
           java-version: '21'
       - uses: gradle/actions/setup-gradle@v3
 
-      - name: Load history
-        uses: actions/checkout@v4
+      - name: Download previous history
+        uses: dawidd6/action-download-artifact@v6
         continue-on-error: true
         with:
-          ref: gh-pages
-          path: gh-pages-prev
+          workflow: ${{ github.event.workflow.path }}
+          name: site-allure-integration
+          path: prev-report
+          search_artifacts: true
 
       - name: Run integration suite
         run: ./gradlew :test-suites:integration:test -Dframework.profile=stage -Dframework.runLiveTests=true
+        continue-on-error: true
 
       - name: Prepare Allure results
         run: |
           mkdir -p build/allure-results/history
-          cp -r gh-pages-prev/allure/integration/history/* build/allure-results/history/ || true
+          if [ -d "prev-report/history" ]; then
+            cp -R prev-report/history/* build/allure-results/history/
+          fi
 
       - name: Build integration Allure report
         run: ./gradlew allureReport
@@ -129,7 +143,6 @@ jobs:
         with:
           name: site-allure-integration
           path: site-to-upload
-          if-no-files-found: error
 
   publish-pages:
     needs: [smoke, regression, integration]
@@ -162,9 +175,8 @@ jobs:
           <!doctype html>
           <html lang="en">
           <head>
-            <meta charset="utf-8" />
-            <title>API Test Reports</title>
-            <style>body { font-family: sans-serif; padding: 20px; }</style>
+            <meta charset="utf-8" /><title>API Test Reports</title>
+            <style>body { font-family: sans-serif; padding: 20px; line-height: 1.6; }</style>
           </head>
           <body>
             <h1>Allure Test Reports</h1>
