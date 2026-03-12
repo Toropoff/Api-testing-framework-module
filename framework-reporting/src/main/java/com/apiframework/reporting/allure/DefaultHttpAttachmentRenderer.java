@@ -5,7 +5,6 @@ import io.qameta.allure.Allure;
 import io.restassured.response.Response;
 import io.restassured.specification.FilterableRequestSpecification;
 
-import java.net.URI;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -30,7 +29,7 @@ public final class DefaultHttpAttachmentRenderer implements HttpAttachmentRender
             .collect(Collectors.toMap(h -> h.getName(), h -> h.getValue(), (l, r) -> r, LinkedHashMap::new));
 
         String content = "method=" + requestSpec.getMethod() + "\n"
-            + "path=" + pathFromUri(requestSpec.getURI()) + "\n"
+            + "path=" + UriUtils.pathFromUri(requestSpec.getURI()) + "\n"
             + "headers=" + maskingStrategy.maskHeaders(headers) + "\n"
             + "body=" + truncate(maskingStrategy.maskBody(safeRequestBody(requestSpec))) + "\n";
         Allure.addAttachment("HTTP Request", "text/plain", content, ".txt");
@@ -53,7 +52,7 @@ public final class DefaultHttpAttachmentRenderer implements HttpAttachmentRender
         Allure.addAttachment("HTTP Response", "text/plain", responseContent, ".txt");
 
         String metadata = "method=" + requestSpec.getMethod() + "\n"
-            + "path=" + pathFromUri(requestSpec.getURI()) + "\n"
+            + "path=" + UriUtils.pathFromUri(requestSpec.getURI()) + "\n"
             + "statusCode=" + response.getStatusCode() + "\n"
             + "durationMs=" + durationMs + "\n"
             + "correlationId=" + requestSpec.getHeaders().getValue(CorrelationIdFilter.HEADER_NAME) + "\n"
@@ -109,13 +108,4 @@ public final class DefaultHttpAttachmentRenderer implements HttpAttachmentRender
         return builder.append('\n').toString();
     }
 
-    private String pathFromUri(String uri) {
-        try {
-            URI parsed = new URI(uri);
-            String path = parsed.getPath();
-            return (path == null || path.isBlank()) ? "/" : path;
-        } catch (Exception ignored) {
-            return uri;
-        }
-    }
 }
