@@ -63,7 +63,10 @@ public final class RabbitMqClient implements MessageBusClient {
                         : response.getProps().getHeaders();
                     return Optional.of(new ConsumedMessage(correlationId, payload, headers));
                 }
-                Thread.sleep(200);
+                long remainingMs = deadlineMs - System.currentTimeMillis();
+                if (remainingMs > 0) {
+                    Thread.sleep(Math.min(200, remainingMs));
+                }
             } catch (IOException exception) {
                 throw new IllegalStateException("Unable to consume message", exception);
             } catch (InterruptedException interruptedException) {
