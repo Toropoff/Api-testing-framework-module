@@ -5,9 +5,9 @@ import com.apiframework.sampledomain.endpoint.PostmanEchoApi;
 import com.apiframework.sampledomain.flow.EchoFlow;
 import com.apiframework.sampledomain.flow.model.PayloadRoundtripResult;
 import com.apiframework.sampledomain.model.EchoPayload;
+import com.apiframework.support.NetworkAwareTestSupport;
 import com.apiframework.testng.base.BaseApiTest;
 import com.apiframework.testng.retry.RetrySetting;
-import org.testng.SkipException;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -40,8 +40,8 @@ public class PostmanEchoRegressionTest extends BaseApiTest {
         try {
             PayloadRoundtripResult result = echoFlow.sendPayloadAndVerifyRoundtrip(payload);
             EchoAssertions.assertPayloadRoundtrip(result);
-        } catch (Throwable ex) {
-            throw new SkipException("Skipped: " + ex.getMessage(), ex);
+        } catch (Exception ex) {
+            NetworkAwareTestSupport.skipOnNetworkFailure(ex);
         }
     }
 }

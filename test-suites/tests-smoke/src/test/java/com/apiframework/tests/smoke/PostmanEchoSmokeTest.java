@@ -4,8 +4,8 @@ import com.apiframework.sampledomain.assertions.EchoAssertions;
 import com.apiframework.sampledomain.endpoint.PostmanEchoApi;
 import com.apiframework.sampledomain.flow.EchoFlow;
 import com.apiframework.sampledomain.flow.model.QueryRoundtripResult;
+import com.apiframework.support.NetworkAwareTestSupport;
 import com.apiframework.testng.base.BaseApiTest;
-import org.testng.SkipException;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -28,8 +28,8 @@ public class PostmanEchoSmokeTest extends BaseApiTest {
         try {
             QueryRoundtripResult roundtrip = echoFlow.verifyQueryRoundtrip("suite", "smoke");
             EchoAssertions.assertQueryRoundtrip(roundtrip);
-        } catch (Throwable ex) {
-            throw new SkipException("Skipped: " + ex.getMessage(), ex);
+        } catch (Exception ex) {
+            NetworkAwareTestSupport.skipOnNetworkFailure(ex);
         }
     }
 }

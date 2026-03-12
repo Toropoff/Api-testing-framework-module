@@ -7,8 +7,8 @@ import com.apiframework.sampledomain.endpoint.PostmanEchoApi;
 import com.apiframework.sampledomain.flow.EchoFlow;
 import com.apiframework.sampledomain.flow.model.QueryRoundtripResult;
 import com.apiframework.sampledomain.model.EchoGetResponse;
+import com.apiframework.support.NetworkAwareTestSupport;
 import com.apiframework.testng.base.BaseApiTest;
-import org.testng.SkipException;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -39,8 +39,8 @@ public class PostmanEchoIntegrationTest extends BaseApiTest {
             String contractBody = normalizedContractBody(result.response().body());
             schemaValidator.assertMatchesSchema(contractBody, "schemas/postman-echo-get.schema.json");
             snapshotChecker.assertMatchesSnapshot("postman-echo-get", contractBody, false);
-        } catch (Throwable ex) {
-            throw new SkipException("Skipped: " + ex.getMessage(), ex);
+        } catch (Exception ex) {
+            NetworkAwareTestSupport.skipOnNetworkFailure(ex);
         }
     }
 
