@@ -1,0 +1,206 @@
+name: Publish Allure Pages
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  pages: write
+  id-token: write
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v3
+
+      # 1. Скачиваем историю из ПРЕДЫДУЩЕГО запуска этого же воркфлоу
+      - name: Download previous history
+        uses: dawidd6/action-download-artifact@v6
+        continue-on-error: true
+        with:
+          workflow: ${{ github.event.workflow.path }} # Автоматически берет текущий файл
+          name: site-allure-smoke
+          path: prev-report
+          search_artifacts: true
+
+      - name: Run smoke suite
+        run: ./gradlew :test-suites:smoke:test -Dframework.profile=dev -Dframework.runLiveTests=true
+        continue-on-error: true
+
+      # 2. Переносим историю в результаты ДО генерации отчета
+      - name: Prepare Allure results
+        run: |
+          mkdir -p build/allure-results/history
+          if [ -d "prev-report/history" ]; then
+            cp -R prev-report/history/* build/allure-results/history/
+          fi
+
+      - name: Build smoke Allure report
+        run: ./gradlew allureReport
+
+      - name: Package smoke site artifact
+        run: |
+          mkdir -p site-to-upload
+          cp -R build/reports/allure-report/allureReport/. site-to-upload/
+
+      - name: Upload smoke site artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: site-allure-smoke
+          path: site-to-upload
+
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v3
+
+      - name: Download previous history
+        uses: dawidd6/action-download-artifact@v6
+        continue-on-error: true
+        with:
+          workflow: ${{ github.event.workflow.path }}
+          name: site-allure-regression
+          path: prev-report
+          search_artifacts: true
+
+      - name: Run regression suite
+        run: ./gradlew :test-suites:regression:test -Dframework.profile=stage -Dframework.runLiveTests=true -Dtest.retry.maxRetries=1
+        continue-on-error: true
+
+      - name: Prepare Allure results
+        run: |
+          mkdir -p build/allure-results/history
+          if [ -d "prev-report/history" ]; then
+            cp -R prev-report/history/* build/allure-results/history/
+          fi
+
+      - name: Build regression Allure report
+        run: ./gradlew allureReport
+
+      - name: Package regression site artifact
+        run: |
+          mkdir -p site-to-upload
+          cp -R build/reports/allure-report/allureReport/. site-to-upload/
+
+      - name: Upload regression site artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: site-allure-regression
+          path: site-to-upload
+
+  integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v3
+
+      - name: Download previous history
+        uses: dawidd6/action-download-artifact@v6
+        continue-on-error: true
+        with:
+          workflow: ${{ github.event.workflow.path }}
+          name: site-allure-integration
+          path: prev-report
+          search_artifacts: true
+
+      - name: Run integration suite
+        run: ./gradlew :test-suites:integration:test -Dframework.profile=stage -Dframework.runLiveTests=true
+        continue-on-error: true
+
+      - name: Prepare Allure results
+        run: |
+          mkdir -p build/allure-results/history
+          if [ -d "prev-report/history" ]; then
+            cp -R prev-report/history/* build/allure-results/history/
+          fi
+
+      - name: Build integration Allure report
+        run: ./gradlew allureReport
+
+      - name: Package integration site artifact
+        run: |
+          mkdir -p site-to-upload
+          cp -R build/reports/allure-report/allureReport/. site-to-upload/
+
+      - name: Upload integration site artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: site-allure-integration
+          path: site-to-upload
+
+  publish-pages:
+    needs: [smoke, regression, integration]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create site structure
+        run: mkdir -p site/allure/smoke site/allure/regression site/allure/integration
+
+      - name: Download smoke artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: site-allure-smoke
+          path: site/allure/smoke
+
+      - name: Download regression artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: site-allure-regression
+          path: site/allure/regression
+
+      - name: Download integration artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: site-allure-integration
+          path: site/allure/integration
+
+      - name: Create root landing page
+        run: |
+          cat <<'HTML' > site/index.html
+          <!doctype html>
+          <html lang="en">
+          <head>
+            <meta charset="utf-8" /><title>API Test Reports</title>
+            <style>body { font-family: sans-serif; padding: 20px; line-height: 1.6; }</style>
+          </head>
+          <body>
+            <h1>Allure Test Reports</h1>
+            <ul>
+              <li><a href="allure/smoke/">Smoke Suite</a></li>
+              <li><a href="allure/regression/">Regression Suite</a></li>
+              <li><a href="allure/integration/">Integration Suite</a></li>
+            </ul>
+          </body>
+          </html>
+          HTML
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy-pages:
+    needs: publish-pages
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
