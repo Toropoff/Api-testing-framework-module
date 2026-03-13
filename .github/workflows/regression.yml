@@ -37,9 +37,9 @@ jobs:
       - name: Inject regression history
         if: always()
         run: |
-          mkdir -p build/allure-results
+          mkdir -p build/reports/allure-report/allureReport/history
           if [ -d ".history/regression/history" ]; then
-            cp -R .history/regression/history build/allure-results/history
+            cp -R .history/regression/history/. build/reports/allure-report/allureReport/history/
           fi
 
       - name: Build Allure report

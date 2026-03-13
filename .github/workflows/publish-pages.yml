@@ -34,12 +34,12 @@ jobs:
         run: ./gradlew :test-suites:smoke:test -Dframework.profile=dev -Dframework.runLiveTests=true
         continue-on-error: true
 
-      # 2. Переносим историю в результаты ДО генерации отчета
+      # 2. Переносим историю в папку, которую читает collectAllureResults ДО генерации отчета
       - name: Prepare Allure results
         run: |
-          mkdir -p build/allure-results/history
+          mkdir -p build/reports/allure-report/allureReport/history
           if [ -d "prev-report/history" ]; then
-            cp -R prev-report/history/* build/allure-results/history/
+            cp -R prev-report/history/. build/reports/allure-report/allureReport/history/
           fi
 
       - name: Build smoke Allure report
@@ -81,9 +81,9 @@ jobs:
 
       - name: Prepare Allure results
         run: |
-          mkdir -p build/allure-results/history
+          mkdir -p build/reports/allure-report/allureReport/history
           if [ -d "prev-report/history" ]; then
-            cp -R prev-report/history/* build/allure-results/history/
+            cp -R prev-report/history/. build/reports/allure-report/allureReport/history/
           fi
 
       - name: Build regression Allure report
@@ -125,9 +125,9 @@ jobs:
 
       - name: Prepare Allure results
         run: |
-          mkdir -p build/allure-results/history
+          mkdir -p build/reports/allure-report/allureReport/history
           if [ -d "prev-report/history" ]; then
-            cp -R prev-report/history/* build/allure-results/history/
+            cp -R prev-report/history/. build/reports/allure-report/allureReport/history/
           fi
 
       - name: Build integration Allure report

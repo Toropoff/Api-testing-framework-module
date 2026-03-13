@@ -40,9 +40,9 @@ jobs:
       - name: Inject smoke history
         if: always()
         run: |
-          mkdir -p build/allure-results
+          mkdir -p build/reports/allure-report/allureReport/history
           if [ -d ".history/smoke/history" ]; then
-            cp -R .history/smoke/history build/allure-results/history
+            cp -R .history/smoke/history/. build/reports/allure-report/allureReport/history/
           fi
 
       - name: Build Allure report

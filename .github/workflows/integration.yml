@@ -35,9 +35,9 @@ jobs:
       - name: Inject integration history
         if: always()
         run: |
-          mkdir -p build/allure-results
+          mkdir -p build/reports/allure-report/allureReport/history
           if [ -d ".history/integration/history" ]; then
-            cp -R .history/integration/history build/allure-results/history
+            cp -R .history/integration/history/. build/reports/allure-report/allureReport/history/
           fi
 
       - name: Build Allure report
