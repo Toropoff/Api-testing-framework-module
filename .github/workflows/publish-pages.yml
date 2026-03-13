@@ -151,12 +151,56 @@ jobs:
           name: site-allure-integration
           path: site-to-upload
 
+  public-api:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v3
+
+      - name: Download previous history
+        uses: dawidd6/action-download-artifact@v6
+        continue-on-error: true
+        with:
+          workflow: ${{ github.event.workflow.path }}
+          name: site-allure-public-api
+          path: prev-report
+          search_artifacts: true
+
+      - name: Run public-api suite
+        run: ./gradlew :test-suites:public-api:test -Dframework.profile=dev -Dframework.runLiveTests=true
+        continue-on-error: true
+
+      - name: Prepare Allure results
+        run: |
+          mkdir -p build/reports/allure-report/allureReport/history
+          if [ -d "prev-report/history" ]; then
+            cp -R prev-report/history/. build/reports/allure-report/allureReport/history/
+          fi
+
+      - name: Build public-api Allure report
+        run: ./gradlew allureReport
+
+      - name: Package public-api site artifact
+        run: |
+          mkdir -p site-to-upload
+          cp -R build/reports/allure-report/allureReport/. site-to-upload/
+
+      - name: Upload public-api site artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: site-allure-public-api
+          path: site-to-upload
+
   publish-pages:
-    needs: [smoke, regression, integration]
+    needs: [smoke, regression, integration, public-api]
     runs-on: ubuntu-latest
     steps:
       - name: Create site structure
-        run: mkdir -p site/allure/smoke site/allure/regression site/allure/integration
+        run: mkdir -p site/allure/smoke site/allure/regression site/allure/integration site/allure/public-api
 
       - name: Download smoke artifact
         uses: actions/download-artifact@v4
@@ -176,6 +220,12 @@ jobs:
           name: site-allure-integration
           path: site/allure/integration
 
+      - name: Download public-api artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: site-allure-public-api
+          path: site/allure/public-api
+
       - name: Create root landing page
         run: |
           cat <<'HTML' > site/index.html
@@ -191,6 +241,7 @@ jobs:
               <li><a href="allure/smoke/">Smoke Suite</a></li>
               <li><a href="allure/regression/">Regression Suite</a></li>
               <li><a href="allure/integration/">Integration Suite</a></li>
+              <li><a href="allure/public-api/">Public API Suite</a></li>
             </ul>
           </body>
           </html>
