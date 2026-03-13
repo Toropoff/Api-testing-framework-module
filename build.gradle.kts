@@ -26,16 +26,19 @@ val suiteAllureResultDirs = listOf(
     layout.projectDirectory.dir("test-suites/tests-smoke/allure-results"),
     layout.projectDirectory.dir("test-suites/tests-regression/allure-results"),
     layout.projectDirectory.dir("test-suites/tests-integration/allure-results"),
+    layout.projectDirectory.dir("test-suites/tests-public-api/allure-results"),
     // Backward compatibility for older local runs that still write into build/allure-results.
     layout.projectDirectory.dir("test-suites/tests-smoke/build/allure-results"),
     layout.projectDirectory.dir("test-suites/tests-regression/build/allure-results"),
-    layout.projectDirectory.dir("test-suites/tests-integration/build/allure-results")
+    layout.projectDirectory.dir("test-suites/tests-integration/build/allure-results"),
+    layout.projectDirectory.dir("test-suites/tests-public-api/build/allure-results")
 )
 
 val allureSuiteTaskPaths = listOf(
     ":test-suites:smoke:test",
     ":test-suites:regression:test",
-    ":test-suites:integration:test"
+    ":test-suites:integration:test",
+    ":test-suites:public-api:test"
 )
 
 tasks.register("collectAllureResults") {

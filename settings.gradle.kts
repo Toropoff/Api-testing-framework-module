@@ -12,10 +12,12 @@ include(
     ":examples:sample-domain",
     ":test-suites:smoke",
     ":test-suites:regression",
-    ":test-suites:integration"
+    ":test-suites:integration",
+    ":test-suites:public-api"
 )
 
 project(":examples:sample-domain").projectDir = file("examples/sample-domain")
 project(":test-suites:smoke").projectDir = file("test-suites/tests-smoke")
 project(":test-suites:regression").projectDir = file("test-suites/tests-regression")
 project(":test-suites:integration").projectDir = file("test-suites/tests-integration")
+project(":test-suites:public-api").projectDir = file("test-suites/tests-public-api")
