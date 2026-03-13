@@ -2,8 +2,8 @@ package com.apiframework.sampledomain.assertions;
 
 import com.apiframework.core.model.ApiResponse;
 import com.apiframework.reporting.steps.AllureActionExecutor;
-import com.apiframework.sampledomain.flow.model.PayloadRoundtripResult;
-import com.apiframework.sampledomain.flow.model.QueryRoundtripResult;
+import com.apiframework.sampledomain.model.PayloadRoundtripResult;
+import com.apiframework.sampledomain.model.QueryRoundtripResult;
 import com.apiframework.sampledomain.model.EchoGetResponse;
 import com.apiframework.sampledomain.model.EchoPostResponse;
 

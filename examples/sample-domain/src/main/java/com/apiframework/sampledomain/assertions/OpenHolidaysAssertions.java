@@ -1,8 +1,8 @@
-package com.apiframework.sampledomain.openholidays.assertions;
+package com.apiframework.sampledomain.assertions;
 
 import com.apiframework.core.model.ApiResponse;
 import com.apiframework.reporting.steps.AllureActionExecutor;
-import com.apiframework.sampledomain.openholidays.model.SubdivisionResponse;
+import com.apiframework.sampledomain.model.SubdivisionResponse;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

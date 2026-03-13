@@ -3,7 +3,7 @@ package com.apiframework.tests.regression;
 import com.apiframework.sampledomain.assertions.EchoAssertions;
 import com.apiframework.sampledomain.endpoint.PostmanEchoApi;
 import com.apiframework.sampledomain.flow.EchoFlow;
-import com.apiframework.sampledomain.flow.model.PayloadRoundtripResult;
+import com.apiframework.sampledomain.model.PayloadRoundtripResult;
 import com.apiframework.sampledomain.model.EchoPayload;
 import com.apiframework.support.NetworkAwareTestSupport;
 import com.apiframework.testng.base.BaseApiTest;

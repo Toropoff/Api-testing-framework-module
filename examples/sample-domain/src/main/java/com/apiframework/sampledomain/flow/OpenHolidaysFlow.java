@@ -1,9 +1,9 @@
-package com.apiframework.sampledomain.openholidays.flow;
+package com.apiframework.sampledomain.flow;
 
 import com.apiframework.core.model.ApiResponse;
 import com.apiframework.reporting.steps.AllureActionExecutor;
-import com.apiframework.sampledomain.openholidays.endpoint.OpenHolidaysApi;
-import com.apiframework.sampledomain.openholidays.model.SubdivisionResponse;
+import com.apiframework.sampledomain.endpoint.OpenHolidaysApi;
+import com.apiframework.sampledomain.model.SubdivisionResponse;
 
 public final class OpenHolidaysFlow {
     private final OpenHolidaysApi openHolidaysApi;

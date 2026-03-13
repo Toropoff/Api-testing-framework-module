@@ -1,10 +1,10 @@
-package com.apiframework.sampledomain.openholidays.endpoint;
+package com.apiframework.sampledomain.endpoint;
 
 import com.apiframework.core.http.HttpClient;
 import com.apiframework.core.model.ApiRequest;
 import com.apiframework.core.model.ApiResponse;
 import com.apiframework.core.model.HttpMethod;
-import com.apiframework.sampledomain.openholidays.model.SubdivisionResponse;
+import com.apiframework.sampledomain.model.SubdivisionResponse;
 
 import java.util.Objects;
 
@@ -18,7 +18,7 @@ public final class OpenHolidaysApi {
     /**
      * GET /Subdivisions — returns subdivisions for a given country.
      *
-     * @param countryIsoCode ISO 3166-1 code of the country (required, e.g. "DE")
+     * @param countryIsoCode  ISO 3166-1 code of the country (required, e.g. "DE")
      * @param languageIsoCode ISO 639-1 language code for localized names (optional, e.g. "EN")
      */
     public ApiResponse<SubdivisionResponse[]> getSubdivisions(String countryIsoCode, String languageIsoCode) {

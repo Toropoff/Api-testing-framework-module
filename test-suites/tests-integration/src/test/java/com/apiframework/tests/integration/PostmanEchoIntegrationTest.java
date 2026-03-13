@@ -5,7 +5,7 @@ import com.apiframework.contracts.snapshot.SnapshotContractChecker;
 import com.apiframework.sampledomain.assertions.EchoAssertions;
 import com.apiframework.sampledomain.endpoint.PostmanEchoApi;
 import com.apiframework.sampledomain.flow.EchoFlow;
-import com.apiframework.sampledomain.flow.model.QueryRoundtripResult;
+import com.apiframework.sampledomain.model.QueryRoundtripResult;
 import com.apiframework.sampledomain.model.EchoGetResponse;
 import com.apiframework.support.NetworkAwareTestSupport;
 import com.apiframework.testng.base.BaseApiTest;
