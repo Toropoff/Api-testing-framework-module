@@ -5,6 +5,13 @@ on:
   schedule:
     - cron: '0 2 * * *'
 
+# Actions/checkout, setup-java, upload-artifact, dawidd6/action-download-artifact and
+# gradle/actions/setup-gradle still bundle Node.js 20 internally. GitHub is forcing
+# migration to Node.js 24 on June 2 2026. Opting in early to avoid a broken run on
+# that date and to suppress the deprecation warnings in the meantime.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 permissions:
   contents: read
 
