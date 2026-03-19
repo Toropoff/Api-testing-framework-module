@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 
 public final class RequestResponseLoggingFilter implements Filter {
     private static final Logger LOGGER = LoggerFactory.getLogger(RequestResponseLoggingFilter.class);
+    private static final int MAX_LOG_BODY_CHARS = 65_536;
 
     @Override
     public Response filter(
@@ -34,12 +35,12 @@ public final class RequestResponseLoggingFilter implements Filter {
             requestSpec.getMethod(),
             requestSpec.getURI(),
             requestHeaders,
-            requestBody
+            truncate(requestBody)
         );
 
         Response response = context.next(requestSpec, responseSpec);
 
-        String responseBody = response.getBody() == null ? "" : response.getBody().asString();
+        String responseBody = extractResponseBody(response);
         Map<String, String> responseHeaders = response.getHeaders().asList().stream()
             .collect(Collectors.toMap(
                 header -> header.getName(),
@@ -51,10 +52,35 @@ public final class RequestResponseLoggingFilter implements Filter {
         LOGGER.info("Response: status={} headers={} body={}",
             response.getStatusCode(),
             responseHeaders,
-            responseBody
+            truncate(responseBody)
         );
 
         return response;
+    }
+
+    private static String extractResponseBody(Response response) {
+        if (response.getBody() == null) {
+            return "";
+        }
+        String contentType = response.getContentType();
+        if (contentType != null && !isTextBased(contentType)) {
+            return "<binary " + contentType + ">";
+        }
+        return response.getBody().asString();
+    }
+
+    private static boolean isTextBased(String contentType) {
+        String lower = contentType.toLowerCase();
+        return lower.contains("json") || lower.contains("xml")
+            || lower.contains("text") || lower.contains("html")
+            || lower.contains("form-urlencoded");
+    }
+
+    private static String truncate(String value) {
+        if (value == null || value.length() <= MAX_LOG_BODY_CHARS) {
+            return value;
+        }
+        return value.substring(0, MAX_LOG_BODY_CHARS) + "...<truncated>";
     }
 
     private static String safeRequestBody(FilterableRequestSpecification requestSpec) {

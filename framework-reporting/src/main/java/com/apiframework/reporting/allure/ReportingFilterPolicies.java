@@ -18,14 +18,6 @@ public final class ReportingFilterPolicies {
         return HttpFilterPolicy.defaultPolicy().withAdditionalFilter(new AllureHttpStepFilter(attachmentsEnabled));
     }
 
-    /**
-     * @deprecated use {@link #withAllureReporting()}.
-     */
-    @Deprecated(forRemoval = false)
-    public static HttpFilterPolicy withAllureAttachments() {
-        return withAllureReporting();
-    }
-
     private static boolean isEnabled(String propertyName, boolean defaultValue) {
         return Boolean.parseBoolean(System.getProperty(propertyName, String.valueOf(defaultValue)));
     }
