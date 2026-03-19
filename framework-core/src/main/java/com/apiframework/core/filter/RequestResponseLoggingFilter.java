@@ -33,8 +33,8 @@ public final class RequestResponseLoggingFilter implements Filter {
         LOGGER.info("Request: {} {} headers={} body={}",
             requestSpec.getMethod(),
             requestSpec.getURI(),
-            SensitiveDataMasker.maskHeaders(requestHeaders),
-            SensitiveDataMasker.maskJsonLikeBody(requestBody)
+            requestHeaders,
+            requestBody
         );
 
         Response response = context.next(requestSpec, responseSpec);
@@ -50,8 +50,8 @@ public final class RequestResponseLoggingFilter implements Filter {
 
         LOGGER.info("Response: status={} headers={} body={}",
             response.getStatusCode(),
-            SensitiveDataMasker.maskHeaders(responseHeaders),
-            SensitiveDataMasker.maskJsonLikeBody(responseBody)
+            responseHeaders,
+            responseBody
         );
 
         return response;

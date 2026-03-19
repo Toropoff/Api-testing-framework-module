@@ -4,13 +4,13 @@ Multi-module API test framework on Java 21 + Gradle + TestNG + Rest Assured with
 
 ## Modules
 
-- `framework-core` - HTTP abstraction, request/response model, auth strategies, profile config, secrets providers, filters and masking, error model.
+- `framework-core` - HTTP abstraction, request/response model, auth strategies, profile config, secrets providers, filters, error model.
 - `examples/sample-domain` - sample domain for Postman Echo (`endpoint`, `flow`, `assertions`, `model`).
 - `framework-testng` - base test classes, retry analyzer, listeners, soft assertions, data providers.
 - `framework-db-oracle` - Oracle datasource + jOOQ repositories + await helpers.
 - `framework-messaging-rabbitmq` - message bus abstraction, RabbitMQ publish/consume, correlation-id checks, await helpers.
 - `framework-contracts` - JSON schema validation, JsonUnit assertions, snapshot checks.
-- `framework-reporting` - Allure TestNG listener + request/response attachments with masking.
+- `framework-reporting` - Allure TestNG listener + request/response attachments.
 - `framework-suite-support` - aggregated dependencies for suite modules.
 - `test-suites/tests-smoke` - smoke suite examples.
 - `test-suites/tests-regression` - regression suite examples.
@@ -40,16 +40,14 @@ Multi-module API test framework on Java 21 + Gradle + TestNG + Rest Assured with
 - Unified HTTP filters:
   - request/response logging,
   - correlation-id,
-  - timing,
-  - sensitive masking.
+  - timing.
 - Contracts and snapshots:
   - JSON schema (`JsonSchemaContractValidator`),
   - JsonUnit assertions,
   - snapshot checker (`SnapshotContractChecker`).
 - Reporting:
   - Allure TestNG listener,
-  - auto-attachments for request/response,
-  - masking for headers and body fields.
+  - auto-attachments for request/response.
 
 ## How reporting works (runtime flow)
 
@@ -57,7 +55,7 @@ End-to-end reporting pipeline for tests based on `BaseApiTest`:
 
 1. `BaseApiTest` creates `HttpClient` with reporting-aware filter policy (`ReportingFilterPolicies.withAllureReporting()`) by default.
 2. Endpoint class (for example `PostmanEchoApi`) executes transport call via `httpClient.execute(...)`.
-3. `AllureHttpStepFilter` (framework-reporting filter layer) creates the HTTP step and attaches request/response/metadata (with masking).
+3. `AllureHttpStepFilter` (framework-reporting filter layer) creates the HTTP step and attaches request/response/metadata.
 4. Domain orchestration (`EchoFlow`) creates `Flow:` and `Action:` steps via `AllureActionExecutor`.
 5. Domain checks (`EchoAssertions`) create `Assert:` steps via `AllureActionExecutor`.
 6. `AllureTestNgListener` enriches test lifecycle only (labels, retry metadata, failure stacktrace, run summary).
@@ -66,7 +64,7 @@ End-to-end reporting pipeline for tests based on `BaseApiTest`:
 
 | Reporting concern | Owner layer/class | Must contain | Must not contain |
 | --- | --- | --- | --- |
-| HTTP request/response reporting | `framework-reporting` / `AllureHttpStepFilter` | HTTP step name, request/response/metadata attachments, masking, transport error attachment | Business-flow step semantics (`Flow:`/`Action:`/`Assert:`), TestNG lifecycle summary |
+| HTTP request/response reporting | `framework-reporting` / `AllureHttpStepFilter` | HTTP step name, request/response/metadata attachments, transport error attachment | Business-flow step semantics (`Flow:`/`Action:`/`Assert:`), TestNG lifecycle summary |
 | Business/test action reporting | Domain flow/assert layers via `AllureActionExecutor` | `Flow:`, `Action:`, `Assert:` semantic steps | Direct request/response attachment logic, listener lifecycle logic |
 | Test lifecycle reporting | `framework-reporting` / `AllureTestNgListener` | labels/tags, retry metadata, failure stacktrace, run/test summary | Per-request HTTP step creation and request/response serialization |
 

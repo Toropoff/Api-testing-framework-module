@@ -15,7 +15,7 @@ import java.util.UUID;
 /**
  * Transport-level Allure reporting filter for a single HTTP request/response exchange.
  * <p>
- * Responsible for HTTP step lifecycle, request/response/metadata attachments, masking, and
+ * Responsible for HTTP step lifecycle, request/response/metadata attachments, and
  * transport error attachment.
  * <p>
  * Not responsible for business-level Flow/Action/Assert semantics (see AllureActionExecutor)

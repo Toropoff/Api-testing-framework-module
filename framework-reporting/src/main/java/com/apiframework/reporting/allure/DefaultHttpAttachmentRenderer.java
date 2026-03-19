@@ -12,12 +12,10 @@ import java.util.stream.Collectors;
 public final class DefaultHttpAttachmentRenderer implements HttpAttachmentRenderer {
     private final boolean attachmentsEnabled;
     private final int maxAttachmentBytes;
-    private final HttpMaskingStrategy maskingStrategy;
 
-    public DefaultHttpAttachmentRenderer(boolean attachmentsEnabled, int maxAttachmentBytes, HttpMaskingStrategy maskingStrategy) {
+    public DefaultHttpAttachmentRenderer(boolean attachmentsEnabled, int maxAttachmentBytes) {
         this.attachmentsEnabled = attachmentsEnabled;
         this.maxAttachmentBytes = maxAttachmentBytes;
-        this.maskingStrategy = maskingStrategy;
     }
 
     @Override
@@ -30,8 +28,8 @@ public final class DefaultHttpAttachmentRenderer implements HttpAttachmentRender
 
         String content = "method=" + requestSpec.getMethod() + "\n"
             + "path=" + UriUtils.pathFromUri(requestSpec.getURI()) + "\n"
-            + "headers=" + maskingStrategy.maskHeaders(headers) + "\n"
-            + "body=" + truncate(maskingStrategy.maskBody(safeRequestBody(requestSpec))) + "\n";
+            + "headers=" + headers + "\n"
+            + "body=" + truncate(safeRequestBody(requestSpec)) + "\n";
         Allure.addAttachment("HTTP Request", "text/plain", content, ".txt");
         Allure.addAttachment("cURL Preview", "text/plain", buildCurlPreview(requestSpec), ".txt");
     }
@@ -47,8 +45,8 @@ public final class DefaultHttpAttachmentRenderer implements HttpAttachmentRender
         String body = response.getBody() == null ? "" : response.getBody().asString();
 
         String responseContent = "status=" + response.getStatusCode() + "\n"
-            + "headers=" + maskingStrategy.maskHeaders(headers) + "\n"
-            + "body=" + truncate(maskingStrategy.maskBody(body)) + "\n";
+            + "headers=" + headers + "\n"
+            + "body=" + truncate(body) + "\n";
         Allure.addAttachment("HTTP Response", "text/plain", responseContent, ".txt");
 
         String metadata = "method=" + requestSpec.getMethod() + "\n"
@@ -67,7 +65,7 @@ public final class DefaultHttpAttachmentRenderer implements HttpAttachmentRender
 
         if (isJson(response.getContentType()) && response.getBody() != null) {
             String pretty = response.getBody().prettyPrint();
-            Allure.addAttachment("Pretty JSON Response", "application/json", truncate(maskingStrategy.maskBody(pretty)), ".json");
+            Allure.addAttachment("Pretty JSON Response", "application/json", truncate(pretty), ".json");
         }
     }
 
@@ -99,11 +97,11 @@ public final class DefaultHttpAttachmentRenderer implements HttpAttachmentRender
         requestSpec.getHeaders().asList().forEach(header -> builder.append(" -H '")
             .append(header.getName())
             .append(": ")
-            .append(maskingStrategy.maskBody(header.getValue()))
+            .append(header.getValue())
             .append("'"));
         String body = safeRequestBody(requestSpec);
         if (!body.isBlank()) {
-            builder.append(" --data '").append(truncate(maskingStrategy.maskBody(body))).append("'");
+            builder.append(" --data '").append(truncate(body)).append("'");
         }
         return builder.append('\n').toString();
     }

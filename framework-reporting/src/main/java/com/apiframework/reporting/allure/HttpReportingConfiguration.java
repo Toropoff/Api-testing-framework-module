@@ -7,21 +7,14 @@ public record HttpReportingConfiguration(
 ) {
     private static final String STEP_NAME_STRATEGY_CLASS = "framework.reporting.stepNameStrategyClass";
     private static final String ATTACHMENT_RENDERER_CLASS = "framework.reporting.attachmentRendererClass";
-    private static final String MASKING_STRATEGY_CLASS = "framework.reporting.maskingStrategyClass";
     private static final String ERROR_ATTACHMENT_STRATEGY_CLASS = "framework.reporting.errorAttachmentStrategyClass";
     private static final String ATTACHMENT_MAX_BYTES_PROPERTY = "framework.reporting.attachments.maxBytes";
 
     public static HttpReportingConfiguration defaultConfiguration(boolean attachmentsEnabled) {
-        HttpMaskingStrategy maskingStrategy = instantiate(
-            System.getProperty(MASKING_STRATEGY_CLASS),
-            HttpMaskingStrategy.class,
-            DefaultHttpMaskingStrategy::new
-        );
-
         HttpAttachmentRenderer renderer = instantiate(
             System.getProperty(ATTACHMENT_RENDERER_CLASS),
             HttpAttachmentRenderer.class,
-            () -> new DefaultHttpAttachmentRenderer(attachmentsEnabled, Integer.getInteger(ATTACHMENT_MAX_BYTES_PROPERTY, 65_536), maskingStrategy)
+            () -> new DefaultHttpAttachmentRenderer(attachmentsEnabled, Integer.getInteger(ATTACHMENT_MAX_BYTES_PROPERTY, 65_536))
         );
 
         return new HttpReportingConfiguration(
