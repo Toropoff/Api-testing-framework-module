@@ -2,13 +2,13 @@ package com.apiframework.tests.integration;
 
 import com.apiframework.contracts.JsonSchemaContractValidator;
 import com.apiframework.contracts.snapshot.SnapshotContractChecker;
-import com.apiframework.sampledomain.assertions.EchoAssertions;
-import com.apiframework.sampledomain.endpoint.PostmanEchoApi;
-import com.apiframework.sampledomain.flow.EchoFlow;
-import com.apiframework.sampledomain.model.QueryRoundtripResult;
-import com.apiframework.sampledomain.model.EchoGetResponse;
-import com.apiframework.support.NetworkAwareTestSupport;
-import com.apiframework.testng.base.BaseApiTest;
+import com.apiframework.domains.postmanecho.assertions.EchoAssertions;
+import com.apiframework.domains.postmanecho.endpoint.PostmanEchoApi;
+import com.apiframework.domains.postmanecho.flow.EchoFlow;
+import com.apiframework.domains.postmanecho.model.QueryRoundtripResult;
+import com.apiframework.domains.postmanecho.model.EchoGetResponse;
+import com.apiframework.testsupport.network.NetworkAwareTestSupport;
+import com.apiframework.testsupport.base.BaseApiTest;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 

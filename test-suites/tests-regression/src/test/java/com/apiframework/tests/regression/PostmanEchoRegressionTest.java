@@ -1,13 +1,13 @@
 package com.apiframework.tests.regression;
 
-import com.apiframework.sampledomain.assertions.EchoAssertions;
-import com.apiframework.sampledomain.endpoint.PostmanEchoApi;
-import com.apiframework.sampledomain.flow.EchoFlow;
-import com.apiframework.sampledomain.model.PayloadRoundtripResult;
-import com.apiframework.sampledomain.model.EchoPayload;
-import com.apiframework.support.NetworkAwareTestSupport;
-import com.apiframework.testng.base.BaseApiTest;
-import com.apiframework.testng.retry.RetrySetting;
+import com.apiframework.domains.postmanecho.assertions.EchoAssertions;
+import com.apiframework.domains.postmanecho.endpoint.PostmanEchoApi;
+import com.apiframework.domains.postmanecho.flow.EchoFlow;
+import com.apiframework.domains.postmanecho.model.PayloadRoundtripResult;
+import com.apiframework.domains.postmanecho.model.EchoPayload;
+import com.apiframework.testsupport.network.NetworkAwareTestSupport;
+import com.apiframework.testsupport.base.BaseApiTest;
+import com.apiframework.testsupport.retry.RetrySetting;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;

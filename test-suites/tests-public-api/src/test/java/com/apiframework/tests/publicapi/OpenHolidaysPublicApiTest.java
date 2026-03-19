@@ -3,12 +3,12 @@ package com.apiframework.tests.publicapi;
 import com.apiframework.core.client.ApiClientFactory;
 import com.apiframework.core.config.FrameworkRuntimeConfig;
 import com.apiframework.core.model.ApiResponse;
-import com.apiframework.sampledomain.assertions.OpenHolidaysAssertions;
-import com.apiframework.sampledomain.endpoint.OpenHolidaysApi;
-import com.apiframework.sampledomain.flow.OpenHolidaysFlow;
-import com.apiframework.sampledomain.model.SubdivisionResponse;
-import com.apiframework.support.NetworkAwareTestSupport;
-import com.apiframework.testng.base.BaseApiTest;
+import com.apiframework.domains.openholidays.assertions.OpenHolidaysAssertions;
+import com.apiframework.domains.openholidays.endpoint.OpenHolidaysApi;
+import com.apiframework.domains.openholidays.flow.OpenHolidaysFlow;
+import com.apiframework.domains.openholidays.model.SubdivisionResponse;
+import com.apiframework.testsupport.network.NetworkAwareTestSupport;
+import com.apiframework.testsupport.base.BaseApiTest;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 

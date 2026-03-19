@@ -2,21 +2,22 @@ rootProject.name = "rest-api-test-framework"
 
 include(
     "framework-core",
-    "framework-testng",
+    "framework-test-support",
     "framework-db-oracle",
     "framework-messaging-rabbitmq",
     "framework-splunk",
     "framework-contracts",
     "framework-reporting",
-    "framework-suite-support",
-    ":examples:sample-domain",
+    ":domains:postman-echo",
+    ":domains:open-holidays",
     ":test-suites:smoke",
     ":test-suites:regression",
     ":test-suites:integration",
     ":test-suites:public-api"
 )
 
-project(":examples:sample-domain").projectDir = file("examples/sample-domain")
+project(":domains:postman-echo").projectDir = file("domains/postman-echo")
+project(":domains:open-holidays").projectDir = file("domains/open-holidays")
 project(":test-suites:smoke").projectDir = file("test-suites/tests-smoke")
 project(":test-suites:regression").projectDir = file("test-suites/tests-regression")
 project(":test-suites:integration").projectDir = file("test-suites/tests-integration")

@@ -1,8 +1,8 @@
 package com.apiframework.reporting.allure;
 
-import com.apiframework.testng.base.BaseApiTest;
-import com.apiframework.testng.base.TestExecutionContext;
-import com.apiframework.testng.retry.FrameworkRetryAnalyzer;
+import com.apiframework.testsupport.base.BaseApiTest;
+import com.apiframework.testsupport.base.TestExecutionContext;
+import com.apiframework.testsupport.retry.FrameworkRetryAnalyzer;
 import io.qameta.allure.Allure;
 import io.qameta.allure.model.Label;
 import org.testng.ITestContext;
