@@ -1,7 +1,5 @@
 package com.apiframework.tests.publicapi;
 
-import com.apiframework.core.client.ApiClientFactory;
-import com.apiframework.core.config.FrameworkRuntimeConfig;
 import com.apiframework.core.model.ApiResponse;
 import com.apiframework.domains.openholidays.assertions.OpenHolidaysAssertions;
 import com.apiframework.domains.openholidays.endpoint.OpenHolidaysApi;
@@ -14,25 +12,16 @@ import org.testng.annotations.Test;
 
 public class OpenHolidaysPublicApiTest extends BaseApiTest {
 
-    private static final String BASE_URL = "https://openholidaysapi.org";
-
     private OpenHolidaysFlow openHolidaysFlow;
+
+    @Override
+    protected String baseUrl() {
+        return OpenHolidaysApi.baseUrl();
+    }
 
     @BeforeClass(alwaysRun = true)
     public void initFlow() {
         super.initHttpClient();
-        // Re-initialize httpClient pointing to the OpenHolidays API base URL instead of
-        // the profile-configured default (e.g. Postman Echo used by other suites).
-        FrameworkRuntimeConfig openHolidaysConfig = new FrameworkRuntimeConfig(
-            runtimeConfig.profile(),
-            BASE_URL,
-            runtimeConfig.connectTimeoutMs(),
-            runtimeConfig.readTimeoutMs(),
-            runtimeConfig.httpRetryPolicy(),
-            runtimeConfig.basicAuth(),
-            runtimeConfig.oauth2()
-        );
-        this.httpClient = ApiClientFactory.create(openHolidaysConfig, authStrategy(), filterPolicy());
         this.openHolidaysFlow = new OpenHolidaysFlow(new OpenHolidaysApi(httpClient()));
     }
 

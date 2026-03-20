@@ -12,12 +12,8 @@ public final class ApiClientFactory {
     private ApiClientFactory() {
     }
 
-    public static HttpClient create(FrameworkRuntimeConfig config, AuthStrategy authStrategy) {
-        return create(config, authStrategy, HttpFilterPolicy.defaultPolicy());
-    }
-
-    public static HttpClient create(FrameworkRuntimeConfig config, AuthStrategy authStrategy, HttpFilterPolicy filterPolicy) {
-        RequestSpecification requestSpecification = new RequestSpecFactory(config, filterPolicy).createBaseSpec();
+    public static HttpClient create(String baseUrl, FrameworkRuntimeConfig config, AuthStrategy authStrategy, HttpFilterPolicy filterPolicy) {
+        RequestSpecification requestSpecification = new RequestSpecFactory(baseUrl, config, filterPolicy).createBaseSpec();
         return new RestAssuredHttpClient(requestSpecification, authStrategy, config.httpRetryPolicy());
     }
 }

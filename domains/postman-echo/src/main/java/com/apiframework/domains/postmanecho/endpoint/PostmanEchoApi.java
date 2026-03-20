@@ -8,9 +8,31 @@ import com.apiframework.domains.postmanecho.model.EchoGetResponse;
 import com.apiframework.domains.postmanecho.model.EchoPayload;
 import com.apiframework.domains.postmanecho.model.EchoPostResponse;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Objects;
+import java.util.Properties;
 
 public final class PostmanEchoApi {
+    private static final String BASE_URL;
+
+    static {
+        Properties props = new Properties();
+        try (InputStream in = PostmanEchoApi.class.getClassLoader().getResourceAsStream("postman-echo.properties")) {
+            if (in == null) {
+                throw new IllegalStateException("postman-echo.properties not found on classpath");
+            }
+            props.load(in);
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to load postman-echo.properties", e);
+        }
+        BASE_URL = Objects.requireNonNull(props.getProperty("baseUrl"), "baseUrl not set in postman-echo.properties");
+    }
+
+    public static String baseUrl() {
+        return BASE_URL;
+    }
+
     private final HttpClient httpClient;
 
     public PostmanEchoApi(HttpClient httpClient) {

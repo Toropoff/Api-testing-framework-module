@@ -45,7 +45,6 @@ public final class ConfigResolver {
 
         return new FrameworkRuntimeConfig(
             profile,
-            properties.apiBaseUrl(),
             properties.connectTimeoutMs(),
             properties.readTimeoutMs(),
             retryPolicy,

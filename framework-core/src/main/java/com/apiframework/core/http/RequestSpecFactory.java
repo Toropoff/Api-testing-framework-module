@@ -11,10 +11,12 @@ import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
 
 public final class RequestSpecFactory {
+    private final String baseUrl;
     private final FrameworkRuntimeConfig config;
     private final HttpFilterPolicy filterPolicy;
 
-    public RequestSpecFactory(FrameworkRuntimeConfig config, HttpFilterPolicy filterPolicy) {
+    public RequestSpecFactory(String baseUrl, FrameworkRuntimeConfig config, HttpFilterPolicy filterPolicy) {
+        this.baseUrl = baseUrl;
         this.config = config;
         this.filterPolicy = filterPolicy;
     }
@@ -27,7 +29,7 @@ public final class RequestSpecFactory {
         );
 
         RequestSpecBuilder builder = new RequestSpecBuilder()
-            .setBaseUri(config.baseUrl())
+            .setBaseUri(baseUrl)
             .setContentType(ContentType.JSON)
             .setConfig(restAssuredConfig);
 

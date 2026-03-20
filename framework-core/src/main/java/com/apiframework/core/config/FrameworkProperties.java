@@ -8,10 +8,6 @@ import org.aeonbits.owner.Config;
 })
 public interface FrameworkProperties extends Config {
 
-    @Key("api.baseUrl")
-    @DefaultValue("https://api.example.local")
-    String apiBaseUrl();
-
     @Key("http.connectTimeoutMs")
     @DefaultValue("5000")
     int connectTimeoutMs();

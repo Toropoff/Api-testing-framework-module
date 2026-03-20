@@ -45,7 +45,7 @@ public abstract class BaseApiTest {
             throw new SkipException("Live API tests are disabled. Set -Dframework.runLiveTests=true");
         }
 
-        this.httpClient = ApiClientFactory.create(runtimeConfig, authStrategy(), filterPolicy());
+        this.httpClient = ApiClientFactory.create(baseUrl(), runtimeConfig, authStrategy(), filterPolicy());
     }
 
     @BeforeMethod(alwaysRun = true)
@@ -66,6 +66,8 @@ public abstract class BaseApiTest {
     public void afterEach(ITestResult result) {
         Reporter.log("[framework] completed=" + testContext.testId() + " status=" + result.getStatus(), true);
     }
+
+    protected abstract String baseUrl();
 
     protected AuthStrategy authStrategy() {
         return AuthStrategy.none();
@@ -103,7 +105,7 @@ public abstract class BaseApiTest {
     protected Map<String, String> environmentTags() {
         Map<String, String> tags = new LinkedHashMap<>();
         tags.put("profile", runtimeConfig.profile().name());
-        tags.put("baseUrl", runtimeConfig.baseUrl());
+        tags.put("baseUrl", baseUrl());
         tags.put("liveTests", System.getProperty("framework.runLiveTests", "false"));
         return tags;
     }

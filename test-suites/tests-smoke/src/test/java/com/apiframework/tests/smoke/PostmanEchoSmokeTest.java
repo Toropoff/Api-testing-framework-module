@@ -12,6 +12,11 @@ import org.testng.annotations.Test;
 public class PostmanEchoSmokeTest extends BaseApiTest {
     private EchoFlow echoFlow;
 
+    @Override
+    protected String baseUrl() {
+        return PostmanEchoApi.baseUrl();
+    }
+
     @BeforeClass(alwaysRun = true)
     public void initFlow() {
         super.initHttpClient();
