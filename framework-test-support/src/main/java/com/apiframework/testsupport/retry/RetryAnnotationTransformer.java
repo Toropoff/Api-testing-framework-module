@@ -9,8 +9,7 @@ import java.lang.reflect.Method;
 public final class RetryAnnotationTransformer implements IAnnotationTransformer {
     @Override
     public void transform(ITestAnnotation annotation, Class testClass, Constructor testConstructor, Method testMethod) {
-        Class<?> retryAnalyzerClass = annotation.getRetryAnalyzerClass();
-        if (retryAnalyzerClass == null || retryAnalyzerClass.getName().contains("DisabledRetryAnalyzer")) {
+        if (annotation.getRetryAnalyzerClass() == null) {
             annotation.setRetryAnalyzer(FrameworkRetryAnalyzer.class);
         }
     }

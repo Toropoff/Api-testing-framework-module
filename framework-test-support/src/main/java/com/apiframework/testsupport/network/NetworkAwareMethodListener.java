@@ -12,21 +12,11 @@ import java.net.UnknownHostException;
 
 /**
  * TestNG listener that automatically converts network-related test failures
- * into skipped tests.
- *
- * <p>Replaces the manual {@code try/catch NetworkAwareTestSupport.skipOnNetworkFailure(ex)}
- * pattern in every test method. Registered globally via {@code @Listeners} on
+ * into skipped tests. Registered globally via {@code @Listeners} on
  * {@link com.apiframework.testsupport.base.BaseApiTest}.
  *
- * <p>Behaviour:
- * <ul>
- *     <li>Only intercepts {@code @Test} methods that have FAILED</li>
- *     <li>Walks the cause chain looking for network exceptions</li>
- *     <li>If found: changes status to SKIP with a descriptive message</li>
- *     <li>If not found: leaves the failure untouched</li>
- *     <li>{@link AssertionError} extends {@code Error}, not {@code Exception} —
- *         assertion failures are never network-caused and always propagate normally</li>
- * </ul>
+ * <p>Also provides public static utility methods ({@link #hasNetworkCause},
+ * {@link #rootCauseMessage}) used by the retry subsystem.
  */
 public final class NetworkAwareMethodListener implements IInvokedMethodListener {
 
@@ -47,7 +37,11 @@ public final class NetworkAwareMethodListener implements IInvokedMethodListener 
         }
     }
 
-    private static boolean hasNetworkCause(Throwable ex) {
+    /**
+     * Walks the cause chain looking for network connectivity exceptions.
+     * Used by the listener and by {@link com.apiframework.testsupport.retry.DefaultRetryPredicate}.
+     */
+    public static boolean hasNetworkCause(Throwable ex) {
         Throwable current = ex;
         while (current != null) {
             if (current instanceof ConnectException
@@ -61,7 +55,10 @@ public final class NetworkAwareMethodListener implements IInvokedMethodListener 
         return false;
     }
 
-    private static String rootCauseMessage(Throwable ex) {
+    /**
+     * Finds the root cause message by walking to the bottom of the cause chain.
+     */
+    public static String rootCauseMessage(Throwable ex) {
         Throwable root = ex;
         while (root.getCause() != null) {
             root = root.getCause();

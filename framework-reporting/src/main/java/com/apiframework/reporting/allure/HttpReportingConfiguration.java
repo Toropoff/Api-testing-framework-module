@@ -1,5 +1,7 @@
 package com.apiframework.reporting.allure;
 
+import com.apiframework.core.util.ReflectiveFactory;
+
 public record HttpReportingConfiguration(
     HttpStepNameStrategy stepNameStrategy,
     HttpAttachmentRenderer attachmentRenderer,
@@ -11,31 +13,22 @@ public record HttpReportingConfiguration(
     private static final String ATTACHMENT_MAX_BYTES_PROPERTY = "framework.reporting.attachments.maxBytes";
 
     public static HttpReportingConfiguration defaultConfiguration(boolean attachmentsEnabled) {
-        HttpAttachmentRenderer renderer = instantiate(
+        HttpAttachmentRenderer renderer = ReflectiveFactory.instantiateOrDefault(
             System.getProperty(ATTACHMENT_RENDERER_CLASS),
             HttpAttachmentRenderer.class,
             () -> new DefaultHttpAttachmentRenderer(attachmentsEnabled, Integer.getInteger(ATTACHMENT_MAX_BYTES_PROPERTY, 65_536))
         );
 
         return new HttpReportingConfiguration(
-            instantiate(System.getProperty(STEP_NAME_STRATEGY_CLASS), HttpStepNameStrategy.class, DefaultHttpStepNameStrategy::new),
+            ReflectiveFactory.instantiateOrDefault(
+                System.getProperty(STEP_NAME_STRATEGY_CLASS),
+                HttpStepNameStrategy.class,
+                DefaultHttpStepNameStrategy::new),
             renderer,
-            instantiate(System.getProperty(ERROR_ATTACHMENT_STRATEGY_CLASS), HttpErrorAttachmentStrategy.class, DefaultHttpErrorAttachmentStrategy::new)
+            ReflectiveFactory.instantiateOrDefault(
+                System.getProperty(ERROR_ATTACHMENT_STRATEGY_CLASS),
+                HttpErrorAttachmentStrategy.class,
+                DefaultHttpErrorAttachmentStrategy::new)
         );
-    }
-
-    private static <T> T instantiate(String className, Class<T> expectedType, java.util.function.Supplier<T> fallback) {
-        if (className == null || className.isBlank()) {
-            return fallback.get();
-        }
-        try {
-            Class<?> loadedClass = Class.forName(className);
-            if (!expectedType.isAssignableFrom(loadedClass)) {
-                throw new IllegalArgumentException("Class " + className + " must implement " + expectedType.getName());
-            }
-            return expectedType.cast(loadedClass.getDeclaredConstructor().newInstance());
-        } catch (Exception e) {
-            throw new IllegalStateException("Failed to instantiate reporting extension: " + className, e);
-        }
     }
 }
