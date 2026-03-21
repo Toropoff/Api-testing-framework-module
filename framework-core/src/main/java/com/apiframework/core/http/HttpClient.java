@@ -1,12 +1,24 @@
 package com.apiframework.core.http;
 
-import com.apiframework.core.model.ApiRequest;
 import com.apiframework.core.model.ApiResponse;
 
-public interface HttpClient {
-    <T> ApiResponse<T> execute(ApiRequest<?> request, Class<T> responseType);
+import java.util.Map;
 
-    default ApiResponse<String> executeRaw(ApiRequest<?> request) {
-        return execute(request, String.class);
-    }
+public interface HttpClient {
+
+    <T> ApiResponse<T> get(String path, Class<T> responseType);
+
+    <T> ApiResponse<T> get(String path, Map<String, ?> queryParams, Class<T> responseType);
+
+    <T> ApiResponse<T> post(String path, Object body, Class<T> responseType);
+
+    <T> ApiResponse<T> put(String path, Object body, Class<T> responseType);
+
+    <T> ApiResponse<T> patch(String path, Object body, Class<T> responseType);
+
+    <T> ApiResponse<T> delete(String path, Class<T> responseType);
+
+    ApiResponse<String> getRaw(String path);
+
+    ApiResponse<String> getRaw(String path, Map<String, ?> queryParams);
 }

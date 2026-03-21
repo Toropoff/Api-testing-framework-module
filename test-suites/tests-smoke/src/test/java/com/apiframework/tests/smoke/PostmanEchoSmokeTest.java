@@ -1,16 +1,15 @@
 package com.apiframework.tests.smoke;
 
-import com.apiframework.domains.postmanecho.assertions.EchoAssertions;
 import com.apiframework.domains.postmanecho.endpoint.PostmanEchoApi;
-import com.apiframework.domains.postmanecho.flow.EchoFlow;
-import com.apiframework.domains.postmanecho.model.QueryRoundtripResult;
 import com.apiframework.testsupport.network.NetworkAwareTestSupport;
 import com.apiframework.testsupport.base.BaseApiTest;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 public class PostmanEchoSmokeTest extends BaseApiTest {
-    private EchoFlow echoFlow;
+    private PostmanEchoApi echoApi;
 
     @Override
     protected String baseUrl() {
@@ -18,9 +17,9 @@ public class PostmanEchoSmokeTest extends BaseApiTest {
     }
 
     @BeforeClass(alwaysRun = true)
-    public void initFlow() {
+    public void init() {
         super.initHttpClient();
-        this.echoFlow = new EchoFlow(new PostmanEchoApi(httpClient()));
+        this.echoApi = new PostmanEchoApi(httpClient());
     }
 
     @Override
@@ -31,8 +30,11 @@ public class PostmanEchoSmokeTest extends BaseApiTest {
     @Test(description = "GET /get should echo query parameter")
     public void shouldEchoQueryParameter() {
         try {
-            QueryRoundtripResult roundtrip = echoFlow.verifyQueryRoundtrip("suite", "smoke");
-            EchoAssertions.assertQueryRoundtrip(roundtrip);
+            var response = echoApi.getEcho("suite", "smoke");
+
+            assertThat(response.statusCode()).isEqualTo(200);
+            assertThat(response.body()).isNotNull();
+            assertThat(response.body().args()).containsEntry("suite", "smoke");
         } catch (Exception ex) {
             NetworkAwareTestSupport.skipOnNetworkFailure(ex);
         }

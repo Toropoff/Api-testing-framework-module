@@ -1,15 +1,14 @@
 package com.apiframework.domains.postmanecho.endpoint;
 
 import com.apiframework.core.http.HttpClient;
-import com.apiframework.core.model.ApiRequest;
 import com.apiframework.core.model.ApiResponse;
-import com.apiframework.core.model.HttpMethod;
 import com.apiframework.domains.postmanecho.model.EchoGetResponse;
 import com.apiframework.domains.postmanecho.model.EchoPayload;
 import com.apiframework.domains.postmanecho.model.EchoPostResponse;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 
@@ -40,16 +39,10 @@ public final class PostmanEchoApi {
     }
 
     public ApiResponse<EchoGetResponse> getEcho(String key, String value) {
-        ApiRequest<Void> request = ApiRequest.<Void>builder(HttpMethod.GET, PostmanEchoRoute.GET_ECHO.path())
-            .queryParam(key, value)
-            .build();
-        return httpClient.execute(request, EchoGetResponse.class);
+        return httpClient.get(PostmanEchoRoute.GET_ECHO.path(), Map.of(key, value), EchoGetResponse.class);
     }
 
     public ApiResponse<EchoPostResponse> postEcho(EchoPayload payload) {
-        ApiRequest<EchoPayload> request = ApiRequest.<EchoPayload>builder(HttpMethod.POST, PostmanEchoRoute.POST_ECHO.path())
-            .body(payload)
-            .build();
-        return httpClient.execute(request, EchoPostResponse.class);
+        return httpClient.post(PostmanEchoRoute.POST_ECHO.path(), payload, EchoPostResponse.class);
     }
 }

@@ -2,18 +2,16 @@ package com.apiframework.tests.integration;
 
 import com.apiframework.contracts.JsonSchemaContractValidator;
 import com.apiframework.contracts.snapshot.SnapshotContractChecker;
-import com.apiframework.domains.postmanecho.assertions.EchoAssertions;
 import com.apiframework.domains.postmanecho.endpoint.PostmanEchoApi;
-import com.apiframework.domains.postmanecho.flow.EchoFlow;
-import com.apiframework.domains.postmanecho.model.QueryRoundtripResult;
-import com.apiframework.domains.postmanecho.model.EchoGetResponse;
 import com.apiframework.testsupport.network.NetworkAwareTestSupport;
 import com.apiframework.testsupport.base.BaseApiTest;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 public class PostmanEchoIntegrationTest extends BaseApiTest {
-    private EchoFlow echoFlow;
+    private PostmanEchoApi echoApi;
     private JsonSchemaContractValidator schemaValidator;
     private SnapshotContractChecker snapshotChecker;
 
@@ -23,9 +21,9 @@ public class PostmanEchoIntegrationTest extends BaseApiTest {
     }
 
     @BeforeClass(alwaysRun = true)
-    public void initDependencies() {
+    public void init() {
         super.initHttpClient();
-        this.echoFlow = new EchoFlow(new PostmanEchoApi(httpClient()));
+        this.echoApi = new PostmanEchoApi(httpClient());
         this.schemaValidator = new JsonSchemaContractValidator();
         this.snapshotChecker = SnapshotContractChecker.fromRootDir();
     }
@@ -38,19 +36,16 @@ public class PostmanEchoIntegrationTest extends BaseApiTest {
     @Test(description = "GET /get should match schema and snapshot contract")
     public void shouldMatchEchoGetContractAndSnapshot() {
         try {
-            QueryRoundtripResult result = echoFlow.verifyQueryRoundtrip("suite", "integration");
+            var response = echoApi.getEcho("suite", "integration");
 
-            EchoAssertions.assertQueryRoundtrip(result);
-            String contractBody = normalizedContractBody(result.response().body());
-            schemaValidator.assertMatchesSchema(contractBody, "schemas/postman-echo-get.schema.json");
-            snapshotChecker.assertMatchesSnapshot("postman-echo-get", contractBody, false);
+            assertThat(response.statusCode()).isEqualTo(200);
+            assertThat(response.body()).isNotNull();
+            assertThat(response.body().args()).containsEntry("suite", "integration");
+
+            schemaValidator.assertMatchesSchema(response.rawBody(), "schemas/postman-echo-get.schema.json");
+            snapshotChecker.assertMatchesSnapshot("postman-echo-get", response.rawBody(), false);
         } catch (Exception ex) {
             NetworkAwareTestSupport.skipOnNetworkFailure(ex);
         }
-    }
-
-    private String normalizedContractBody(EchoGetResponse body) {
-        return "{\"args\":{\"suite\":\"" + body.args().getOrDefault("suite", "")
-            + "\"},\"url\":\"" + body.url() + "\"}";
     }
 }

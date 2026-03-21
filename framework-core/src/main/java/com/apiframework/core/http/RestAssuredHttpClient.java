@@ -4,9 +4,7 @@ import com.apiframework.core.auth.AuthStrategy;
 import com.apiframework.core.auth.RefreshableAuthStrategy;
 import com.apiframework.core.filter.CorrelationIdFilter;
 import com.apiframework.core.json.JacksonProvider;
-import com.apiframework.core.model.ApiRequest;
 import com.apiframework.core.model.ApiResponse;
-import com.apiframework.core.model.HttpMethod;
 import com.apiframework.core.model.HttpRetryPolicy;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -46,12 +44,53 @@ public final class RestAssuredHttpClient implements HttpClient {
     }
 
     @Override
-    public <T> ApiResponse<T> execute(ApiRequest<?> request, Class<T> responseType) {
-        HttpRetryPolicy retryPolicy = request.retryPolicy() == null ? defaultRetryPolicy : request.retryPolicy();
+    public <T> ApiResponse<T> get(String path, Class<T> responseType) {
+        return get(path, Map.of(), responseType);
+    }
 
+    @Override
+    public <T> ApiResponse<T> get(String path, Map<String, ?> queryParams, Class<T> responseType) {
+        return executeWithRetry(path, "GET", null, queryParams, responseType);
+    }
+
+    @Override
+    public <T> ApiResponse<T> post(String path, Object body, Class<T> responseType) {
+        return executeWithRetry(path, "POST", body, Map.of(), responseType);
+    }
+
+    @Override
+    public <T> ApiResponse<T> put(String path, Object body, Class<T> responseType) {
+        return executeWithRetry(path, "PUT", body, Map.of(), responseType);
+    }
+
+    @Override
+    public <T> ApiResponse<T> patch(String path, Object body, Class<T> responseType) {
+        return executeWithRetry(path, "PATCH", body, Map.of(), responseType);
+    }
+
+    @Override
+    public <T> ApiResponse<T> delete(String path, Class<T> responseType) {
+        return executeWithRetry(path, "DELETE", null, Map.of(), responseType);
+    }
+
+    @Override
+    public ApiResponse<String> getRaw(String path) {
+        return getRaw(path, Map.of());
+    }
+
+    @Override
+    public ApiResponse<String> getRaw(String path, Map<String, ?> queryParams) {
+        return executeWithRetry(path, "GET", null, queryParams, String.class);
+    }
+
+    // --- internals ---
+
+    private <T> ApiResponse<T> executeWithRetry(
+        String path, String method, Object body, Map<String, ?> queryParams, Class<T> responseType
+    ) {
         boolean refreshedAfter401 = false;
-        for (int attempt = 1; attempt <= retryPolicy.maxAttempts(); attempt++) {
-            Response response = executeOnce(request);
+        for (int attempt = 1; attempt <= defaultRetryPolicy.maxAttempts(); attempt++) {
+            Response response = executeOnce(path, method, body, queryParams);
             String rawBody = response.getBody() == null ? "" : response.getBody().asString();
 
             if (!refreshedAfter401 && authStrategy instanceof RefreshableAuthStrategy refreshableAuth
@@ -62,12 +101,12 @@ public final class RestAssuredHttpClient implements HttpClient {
                 continue;
             }
 
-            boolean shouldRetry = attempt < retryPolicy.maxAttempts()
-                && retryPolicy.retryableStatusCodes().contains(response.statusCode());
+            boolean shouldRetry = attempt < defaultRetryPolicy.maxAttempts()
+                && defaultRetryPolicy.retryableStatusCodes().contains(response.statusCode());
 
             if (shouldRetry) {
-                LOGGER.warn("HTTP retry attempt {}/{} due to status {}", attempt, retryPolicy.maxAttempts(), response.statusCode());
-                sleepQuietly(retryPolicy.delayBetweenAttempts().toMillis());
+                LOGGER.warn("HTTP retry attempt {}/{} due to status {}", attempt, defaultRetryPolicy.maxAttempts(), response.statusCode());
+                sleepQuietly(defaultRetryPolicy.delayBetweenAttempts().toMillis());
                 continue;
             }
 
@@ -77,34 +116,31 @@ public final class RestAssuredHttpClient implements HttpClient {
         throw new IllegalStateException("Exhausted HTTP retries without a final response");
     }
 
-    private Response executeOnce(ApiRequest<?> request) {
-        Objects.requireNonNull(request.method(), "HTTP method must not be null");
-        String path = Objects.requireNonNull(request.path(), "Request path must not be null");
+    private Response executeOnce(String path, String method, Object body, Map<String, ?> queryParams) {
+        Objects.requireNonNull(method, "HTTP method must not be null");
+        Objects.requireNonNull(path, "Request path must not be null");
 
-        RequestSpecification specification = RestAssured
+        RequestSpecification spec = RestAssured
             .given()
             .spec(new RequestSpecBuilder().addRequestSpecification(baseSpec).build());
 
-        authStrategy.apply(specification);
+        authStrategy.apply(spec);
 
-        if (!request.headers().isEmpty()) {
-            specification.headers(request.headers());
+        if (queryParams != null && !queryParams.isEmpty()) {
+            spec.queryParams(queryParams);
         }
 
-        if (!request.queryParams().isEmpty()) {
-            specification.queryParams(request.queryParams());
+        if (body != null) {
+            spec.body(body);
         }
 
-        if (request.body() != null) {
-            specification.body(request.body());
-        }
-
-        return switch (request.method()) {
-            case GET -> specification.get(path);
-            case POST -> specification.post(path);
-            case PUT -> specification.put(path);
-            case PATCH -> specification.patch(path);
-            case DELETE -> specification.delete(path);
+        return switch (method) {
+            case "GET" -> spec.get(path);
+            case "POST" -> spec.post(path);
+            case "PUT" -> spec.put(path);
+            case "PATCH" -> spec.patch(path);
+            case "DELETE" -> spec.delete(path);
+            default -> throw new IllegalArgumentException("Unsupported HTTP method: " + method);
         };
     }
 
