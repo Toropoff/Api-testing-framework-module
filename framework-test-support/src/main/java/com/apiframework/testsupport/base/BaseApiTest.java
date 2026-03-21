@@ -8,6 +8,7 @@ import com.apiframework.core.filter.CorrelationIdFilter;
 import com.apiframework.core.filter.FilterPolicyProvider;
 import com.apiframework.core.filter.HttpFilterPolicy;
 import com.apiframework.core.http.HttpClient;
+import com.apiframework.testsupport.network.NetworkAwareMethodListener;
 import org.testng.ITestResult;
 import org.testng.Reporter;
 import org.testng.SkipException;
@@ -15,6 +16,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.Listeners;
 
 import java.time.Instant;
 import java.util.LinkedHashMap;
@@ -23,6 +25,7 @@ import java.util.ServiceLoader;
 import java.util.UUID;
 import java.util.function.Function;
 
+@Listeners(NetworkAwareMethodListener.class)
 public abstract class BaseApiTest {
     public static final String TEST_CONTEXT_ATTRIBUTE = "framework.test.context";
 
@@ -41,7 +44,7 @@ public abstract class BaseApiTest {
             initRuntimeConfig();
         }
 
-        if (requiresLiveApi() && !Boolean.parseBoolean(System.getProperty("framework.runLiveTests", "false"))) {
+        if (isLiveApi() && !Boolean.parseBoolean(System.getProperty("framework.runLiveTests", "false"))) {
             throw new SkipException("Live API tests are disabled. Set -Dframework.runLiveTests=true");
         }
 
@@ -73,13 +76,6 @@ public abstract class BaseApiTest {
         return AuthStrategy.none();
     }
 
-    /**
-     * Default policy for all descendants: discovers a reporting-aware filter provider
-     * via {@link ServiceLoader}. Falls back to {@link HttpFilterPolicy#defaultPolicy()}
-     * when no provider is on the classpath.
-     *
-     * <p>Can be overridden in a specific test class for a custom filter pipeline.
-     */
     protected HttpFilterPolicy filterPolicy() {
         return ServiceLoader.load(FilterPolicyProvider.class)
             .findFirst()
@@ -87,8 +83,16 @@ public abstract class BaseApiTest {
             .orElse(HttpFilterPolicy.defaultPolicy());
     }
 
+    /**
+     * @deprecated Override kept for backward compatibility. Prefer {@link LiveApi} annotation.
+     */
+    @Deprecated
     protected boolean requiresLiveApi() {
         return false;
+    }
+
+    private boolean isLiveApi() {
+        return getClass().isAnnotationPresent(LiveApi.class) || requiresLiveApi();
     }
 
     protected <T> T api(Function<HttpClient, T> apiFactory) {

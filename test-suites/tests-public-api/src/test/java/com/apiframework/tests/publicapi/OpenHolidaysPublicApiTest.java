@@ -2,58 +2,42 @@ package com.apiframework.tests.publicapi;
 
 import com.apiframework.domains.openholidays.endpoint.OpenHolidaysApi;
 import com.apiframework.domains.openholidays.model.SubdivisionResponse;
-import com.apiframework.testsupport.network.NetworkAwareTestSupport;
 import com.apiframework.testsupport.base.BaseApiTest;
+import com.apiframework.testsupport.base.LiveApi;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@LiveApi
 public class OpenHolidaysPublicApiTest extends BaseApiTest {
     private OpenHolidaysApi openHolidaysApi;
 
-    @Override
-    protected String baseUrl() {
-        return OpenHolidaysApi.baseUrl();
-    }
+    @Override protected String baseUrl() { return OpenHolidaysApi.baseUrl(); }
 
-    @BeforeClass(alwaysRun = true)
+    @BeforeClass(alwaysRun = true, dependsOnMethods = "initHttpClient")
     public void init() {
-        super.initHttpClient();
-        this.openHolidaysApi = new OpenHolidaysApi(httpClient());
-    }
-
-    @Override
-    protected boolean requiresLiveApi() {
-        return true;
+        this.openHolidaysApi = api(OpenHolidaysApi::new);
     }
 
     @Test(description = "GET /Subdivisions should return a non-empty list for a valid countryIsoCode")
     public void shouldReturnSubdivisionsForValidCountry() {
-        try {
-            var response = openHolidaysApi.getSubdivisions("DE", "EN");
+        var response = openHolidaysApi.getSubdivisions("DE", "EN");
 
-            assertThat(response.statusCode()).isEqualTo(200);
-            assertThat(response.body()).isNotNull().isNotEmpty();
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.body()).isNotNull().isNotEmpty();
 
-            SubdivisionResponse first = response.body()[0];
-            assertThat(first.isoCode()).isNotBlank();
-            assertThat(first.shortName()).isNotBlank();
-            assertThat(first.name()).isNotEmpty();
-            assertThat(first.officialLanguages()).isNotEmpty();
-        } catch (Exception ex) {
-            NetworkAwareTestSupport.skipOnNetworkFailure(ex);
-        }
+        SubdivisionResponse first = response.body()[0];
+        assertThat(first.isoCode()).isNotBlank();
+        assertThat(first.shortName()).isNotBlank();
+        assertThat(first.name()).isNotEmpty();
+        assertThat(first.officialLanguages()).isNotEmpty();
     }
 
     @Test(description = "GET /Subdivisions without countryIsoCode should return 400 Bad Request")
     public void shouldReturn400WhenCountryIsoCodeIsMissing() {
-        try {
-            var response = openHolidaysApi.getSubdivisionsRaw();
+        var response = openHolidaysApi.getSubdivisionsRaw();
 
-            assertThat(response.statusCode()).isEqualTo(400);
-        } catch (Exception ex) {
-            NetworkAwareTestSupport.skipOnNetworkFailure(ex);
-        }
+        assertThat(response.statusCode()).isEqualTo(400);
     }
 }
