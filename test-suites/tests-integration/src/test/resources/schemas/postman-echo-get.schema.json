@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "type": "object",
-  "required": ["args", "url"],
+  "required": ["args", "headers", "url"],
   "properties": {
     "args": {
       "type": "object",
@@ -10,6 +10,10 @@
         "suite": {"type": "string"}
       },
       "additionalProperties": false
+    },
+    "headers": {
+      "type": "object",
+      "additionalProperties": {"type": "string"}
     },
     "url": {"type": "string"}
   },
