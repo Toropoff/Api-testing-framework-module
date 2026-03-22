@@ -14,10 +14,6 @@ public final class SnapshotContractChecker {
         this.snapshotsRoot = snapshotsRoot;
     }
 
-    public static SnapshotContractChecker defaultChecker() {
-        return new SnapshotContractChecker(Path.of("framework-contracts", "src", "main", "resources", "snapshots"));
-    }
-
     /**
      * Creates a checker that resolves snapshots relative to the Gradle root project directory.
      * Walks up from user.dir until it finds settings.gradle.kts, then resolves the standard
@@ -30,7 +26,9 @@ public final class SnapshotContractChecker {
             current = current.getParent();
         }
         if (current == null) {
-            return defaultChecker();
+            throw new IllegalStateException(
+                "Cannot locate project root (settings.gradle.kts not found above " +
+                System.getProperty("user.dir") + ")");
         }
         return new SnapshotContractChecker(
             current.resolve("framework-contracts").resolve("src")
@@ -41,17 +39,12 @@ public final class SnapshotContractChecker {
         Path snapshotPath = snapshotsRoot.resolve(snapshotName + ".json");
 
         try {
-            Files.createDirectories(snapshotPath.getParent());
-
-            if (Files.notExists(snapshotPath)) {
-                if (updateSnapshots) {
-                    Files.writeString(snapshotPath, actualJson, StandardCharsets.UTF_8);
-                    return;
-                }
+            if (Files.notExists(snapshotPath) && !updateSnapshots) {
                 throw new AssertionError("Snapshot not found: " + snapshotPath);
             }
 
             if (updateSnapshots) {
+                Files.createDirectories(snapshotPath.getParent());
                 Files.writeString(snapshotPath, actualJson, StandardCharsets.UTF_8);
                 return;
             }
