@@ -1,11 +1,11 @@
 package com.apiframework.contracts.snapshot;
 
-import com.apiframework.contracts.JsonUnitContractAssertions;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+
+import static net.javacrumbs.jsonunit.assertj.JsonAssertions.assertThatJson;
 
 public final class SnapshotContractChecker {
     private final Path snapshotsRoot;
@@ -57,7 +57,7 @@ public final class SnapshotContractChecker {
             }
 
             String expectedJson = Files.readString(snapshotPath, StandardCharsets.UTF_8);
-            JsonUnitContractAssertions.assertJsonEquals(actualJson, expectedJson);
+            assertThatJson(actualJson).isEqualTo(expectedJson);
         } catch (AssertionError assertionError) {
             throw assertionError;
         } catch (IOException ioException) {
