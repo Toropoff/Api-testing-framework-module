@@ -15,8 +15,7 @@ public final class ReportingFilterPolicies {
         }
 
         return HttpFilterPolicy.defaultPolicy()
-            .withAdditionalFilter(new AllureRestAssured())
-            .withAdditionalFilter(new CurlPreviewFilter());
+            .withAdditionalFilter(new AllureRestAssured());
     }
 
     private static boolean isEnabled(String propertyName, boolean defaultValue) {
