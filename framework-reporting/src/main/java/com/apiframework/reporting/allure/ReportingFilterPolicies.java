@@ -1,10 +1,10 @@
 package com.apiframework.reporting.allure;
 
 import com.apiframework.core.filter.HttpFilterPolicy;
+import io.qameta.allure.restassured.AllureRestAssured;
 
 public final class ReportingFilterPolicies {
     public static final String HTTP_STEPS_ENABLED_PROPERTY = "framework.reporting.httpSteps.enabled";
-    public static final String ATTACHMENTS_ENABLED_PROPERTY = "framework.reporting.attachments.enabled";
 
     private ReportingFilterPolicies() {
     }
@@ -14,8 +14,9 @@ public final class ReportingFilterPolicies {
             return HttpFilterPolicy.defaultPolicy();
         }
 
-        boolean attachmentsEnabled = isEnabled(ATTACHMENTS_ENABLED_PROPERTY, true);
-        return HttpFilterPolicy.defaultPolicy().withAdditionalFilter(new AllureHttpStepFilter(attachmentsEnabled));
+        return HttpFilterPolicy.defaultPolicy()
+            .withAdditionalFilter(new AllureRestAssured())
+            .withAdditionalFilter(new CurlPreviewFilter());
     }
 
     private static boolean isEnabled(String propertyName, boolean defaultValue) {
