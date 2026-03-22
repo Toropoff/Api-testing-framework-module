@@ -5,6 +5,8 @@ import io.qameta.allure.Allure;
 import io.restassured.response.Response;
 import io.restassured.specification.FilterableRequestSpecification;
 
+import io.restassured.http.Headers;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -23,12 +25,10 @@ public final class DefaultHttpAttachmentRenderer implements HttpAttachmentRender
         if (!attachmentsEnabled) {
             return;
         }
-        Map<String, String> headers = requestSpec.getHeaders().asList().stream()
-            .collect(Collectors.toMap(h -> h.getName(), h -> h.getValue(), (l, r) -> r, LinkedHashMap::new));
 
         String content = "method=" + requestSpec.getMethod() + "\n"
             + "path=" + UriUtils.pathFromUri(requestSpec.getURI()) + "\n"
-            + "headers=" + headers + "\n"
+            + "headers=" + headersToMap(requestSpec.getHeaders()) + "\n"
             + "body=" + truncate(safeRequestBody(requestSpec)) + "\n";
         Allure.addAttachment("HTTP Request", "text/plain", content, ".txt");
         Allure.addAttachment("cURL Preview", "text/plain", buildCurlPreview(requestSpec), ".txt");
@@ -39,13 +39,10 @@ public final class DefaultHttpAttachmentRenderer implements HttpAttachmentRender
         if (!attachmentsEnabled) {
             return;
         }
-
-        Map<String, String> headers = response.getHeaders().asList().stream()
-            .collect(Collectors.toMap(h -> h.getName(), h -> h.getValue(), (l, r) -> r, LinkedHashMap::new));
         String body = response.getBody() == null ? "" : response.getBody().asString();
 
         String responseContent = "status=" + response.getStatusCode() + "\n"
-            + "headers=" + headers + "\n"
+            + "headers=" + headersToMap(response.getHeaders()) + "\n"
             + "body=" + truncate(body) + "\n";
         Allure.addAttachment("HTTP Response", "text/plain", responseContent, ".txt");
 
@@ -64,9 +61,14 @@ public final class DefaultHttpAttachmentRenderer implements HttpAttachmentRender
         }
 
         if (isJson(response.getContentType()) && response.getBody() != null) {
-            String pretty = response.getBody().prettyPrint();
+            String pretty = response.getBody().asPrettyString();
             Allure.addAttachment("Pretty JSON Response", "application/json", truncate(pretty), ".json");
         }
+    }
+
+    private static Map<String, String> headersToMap(Headers headers) {
+        return headers.asList().stream()
+            .collect(Collectors.toMap(h -> h.getName(), h -> h.getValue(), (l, r) -> r, LinkedHashMap::new));
     }
 
     private String truncate(String value) {
