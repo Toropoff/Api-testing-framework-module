@@ -1,7 +1,6 @@
 package com.apiframework.core.http;
 
 import com.apiframework.core.auth.AuthStrategy;
-import com.apiframework.core.auth.RefreshableAuthStrategy;
 import com.apiframework.core.filter.CorrelationIdFilter;
 import com.apiframework.core.json.JacksonProvider;
 import com.apiframework.core.model.ApiResponse;
@@ -88,18 +87,9 @@ public final class RestAssuredHttpClient implements HttpClient {
     private <T> ApiResponse<T> executeWithRetry(
         String path, String method, Object body, Map<String, ?> queryParams, Class<T> responseType
     ) {
-        boolean refreshedAfter401 = false;
         for (int attempt = 1; attempt <= defaultRetryPolicy.maxAttempts(); attempt++) {
             Response response = executeOnce(path, method, body, queryParams);
             String rawBody = response.getBody() == null ? "" : response.getBody().asString();
-
-            if (!refreshedAfter401 && authStrategy instanceof RefreshableAuthStrategy refreshableAuth
-                && refreshableAuth.shouldRefresh(response.statusCode(), rawBody)) {
-                LOGGER.info("Refreshing OAuth2 token due to unauthorized response");
-                refreshableAuth.refreshToken();
-                refreshedAfter401 = true;
-                continue;
-            }
 
             boolean shouldRetry = attempt < defaultRetryPolicy.maxAttempts()
                 && defaultRetryPolicy.retryableStatusCodes().contains(response.statusCode());

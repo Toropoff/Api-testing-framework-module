@@ -32,11 +32,6 @@ public final class ConfigResolver {
         String basicPassword = resolveSecret(properties.basicPasswordSecretKey(), chain)
             .orElseGet(() -> System.getProperty("auth.basic.password", ""));
 
-        String oauth2ClientSecret = resolveSecret(properties.oauth2ClientSecretKey(), chain)
-            .orElseGet(() -> System.getProperty("auth.oauth2.clientSecret", ""));
-        String oauth2Password = resolveSecret(properties.oauth2PasswordSecretKey(), chain)
-            .orElseGet(() -> System.getProperty("auth.oauth2.password", ""));
-
         HttpRetryPolicy retryPolicy = new HttpRetryPolicy(
             properties.retryMaxAttempts(),
             Duration.ofMillis(properties.retryDelayMs()),
@@ -48,16 +43,8 @@ public final class ConfigResolver {
             properties.connectTimeoutMs(),
             properties.readTimeoutMs(),
             retryPolicy,
-            new BasicAuthConfig(basicUsername, basicPassword),
-            new OAuth2Config(
-                properties.oauth2TokenUrl(),
-                properties.oauth2ClientId(),
-                oauth2ClientSecret,
-                properties.oauth2Username(),
-                oauth2Password,
-                properties.oauth2Scope(),
-                Duration.ofSeconds(properties.oauth2RefreshSkewSeconds())
-            )
+            basicUsername,
+            basicPassword
         );
     }
 

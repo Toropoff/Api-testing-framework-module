@@ -7,7 +7,7 @@ public record FrameworkRuntimeConfig(
     int connectTimeoutMs,
     int readTimeoutMs,
     HttpRetryPolicy httpRetryPolicy,
-    BasicAuthConfig basicAuth,
-    OAuth2Config oauth2
+    String basicAuthUsername,
+    String basicAuthPassword
 ) {
 }

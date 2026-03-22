@@ -24,10 +24,6 @@ public interface FrameworkProperties extends Config {
     @DefaultValue("0")
     long retryDelayMs();
 
-    @Key("oauth2.refreshSkewSeconds")
-    @DefaultValue("30")
-    long oauth2RefreshSkewSeconds();
-
     @Key("auth.basic.usernameSecretKey")
     @DefaultValue("auth.basic.username")
     String basicUsernameSecretKey();
@@ -35,28 +31,4 @@ public interface FrameworkProperties extends Config {
     @Key("auth.basic.passwordSecretKey")
     @DefaultValue("auth.basic.password")
     String basicPasswordSecretKey();
-
-    @Key("auth.oauth2.tokenUrl")
-    @DefaultValue("https://auth.example.local/oauth/token")
-    String oauth2TokenUrl();
-
-    @Key("auth.oauth2.clientId")
-    @DefaultValue("example-client")
-    String oauth2ClientId();
-
-    @Key("auth.oauth2.clientSecretKey")
-    @DefaultValue("auth.oauth2.clientSecret")
-    String oauth2ClientSecretKey();
-
-    @Key("auth.oauth2.username")
-    @DefaultValue("api-user")
-    String oauth2Username();
-
-    @Key("auth.oauth2.passwordSecretKey")
-    @DefaultValue("auth.oauth2.password")
-    String oauth2PasswordSecretKey();
-
-    @Key("auth.oauth2.scope")
-    @DefaultValue("openid profile")
-    String oauth2Scope();
 }
