@@ -1,11 +1,6 @@
 package com.apiframework.testsupport.retry;
 
-import com.apiframework.core.util.ReflectiveFactory;
-
 public final class RetryConfiguration {
-    private static final String PREDICATE_CLASS_PROPERTY = "test.retry.predicateClass";
-    private static final String DELAY_STRATEGY_CLASS_PROPERTY = "test.retry.delayStrategyClass";
-
     private RetryConfiguration() {
     }
 
@@ -18,18 +13,10 @@ public final class RetryConfiguration {
     }
 
     public static RetryPredicate retryPredicate() {
-        return ReflectiveFactory.instantiateOrDefault(
-            System.getProperty(PREDICATE_CLASS_PROPERTY),
-            RetryPredicate.class,
-            DefaultRetryPredicate::new
-        );
+        return new DefaultRetryPredicate();
     }
 
     public static RetryDelayStrategy retryDelayStrategy() {
-        return ReflectiveFactory.instantiateOrDefault(
-            System.getProperty(DELAY_STRATEGY_CLASS_PROPERTY),
-            RetryDelayStrategy.class,
-            FixedRetryDelayStrategy::new
-        );
+        return new FixedRetryDelayStrategy();
     }
 }
