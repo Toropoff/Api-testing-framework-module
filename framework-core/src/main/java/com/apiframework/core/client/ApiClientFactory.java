@@ -8,6 +8,10 @@ import com.apiframework.core.http.RequestSpecFactory;
 import com.apiframework.core.http.RestAssuredHttpClient;
 import io.restassured.specification.RequestSpecification;
 
+/**
+ * Factory that assembles the HTTP client stack: RequestSpecification (timeouts, filters,
+ * content type) + AuthStrategy + RetryPolicy &rarr; RestAssuredHttpClient.
+ */
 public final class ApiClientFactory {
     private ApiClientFactory() {
     }

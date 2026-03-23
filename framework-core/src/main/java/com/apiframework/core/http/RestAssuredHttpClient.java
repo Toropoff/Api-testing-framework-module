@@ -18,6 +18,10 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Core HTTP client implementation backed by REST Assured.
+ * REST Assured is a non-replaceable foundation of this framework.
+ */
 public final class RestAssuredHttpClient implements HttpClient {
     private static final Logger LOGGER = LoggerFactory.getLogger(RestAssuredHttpClient.class);
 
