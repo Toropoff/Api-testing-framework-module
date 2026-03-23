@@ -3,7 +3,7 @@ package com.apiframework.core.config;
 import com.apiframework.core.model.HttpRetryPolicy;
 
 public record FrameworkRuntimeConfig(
-    EnvironmentProfile profile,
+    String profile,
     int connectTimeoutMs,
     int readTimeoutMs,
     HttpRetryPolicy httpRetryPolicy,

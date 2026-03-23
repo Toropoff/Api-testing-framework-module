@@ -2,6 +2,14 @@ package com.apiframework.core.config;
 
 import org.aeonbits.owner.Config;
 
+/**
+ * Owner-based typed property interface for framework configuration.
+ * Part of the production integration interface — loads values from
+ * {@code classpath:application-{profile}.properties} with {@code @DefaultValue} fallbacks.
+ *
+ * <p>Not called by the default dev/test config path ({@link ConfigResolver#resolveFromSystem()}).
+ * Activated when {@link ConfigResolver#resolve(EnvironmentProfile, java.util.List)} is used directly.
+ */
 @Config.Sources({
     "classpath:application-${framework.profile}.properties",
     "classpath:application.properties"

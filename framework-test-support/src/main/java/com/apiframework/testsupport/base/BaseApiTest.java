@@ -108,7 +108,7 @@ public abstract class BaseApiTest {
 
     protected Map<String, String> environmentTags() {
         Map<String, String> tags = new LinkedHashMap<>();
-        tags.put("profile", runtimeConfig.profile().name());
+        tags.put("profile", runtimeConfig.profile());
         tags.put("baseUrl", baseUrl());
         tags.put("liveTests", System.getProperty("framework.runLiveTests", "false"));
         return tags;
