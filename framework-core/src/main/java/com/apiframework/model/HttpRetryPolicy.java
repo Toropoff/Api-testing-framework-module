@@ -1,4 +1,4 @@
-package com.apiframework.core.model;
+package com.apiframework.model;
 
 import java.time.Duration;
 import java.util.Set;

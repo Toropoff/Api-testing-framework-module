@@ -1,6 +1,6 @@
 package com.apiframework.testsupport.contracts;
 
-import com.apiframework.core.json.JacksonProvider;
+import com.apiframework.json.JacksonProvider;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.networknt.schema.JsonSchema;

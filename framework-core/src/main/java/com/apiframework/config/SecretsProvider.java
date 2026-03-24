@@ -1,4 +1,4 @@
-package com.apiframework.core.config;
+package com.apiframework.config;
 
 import java.util.Optional;
 

@@ -1,6 +1,6 @@
 package com.apiframework.splunk;
 
-import com.apiframework.core.json.JacksonProvider;
+import com.apiframework.json.JacksonProvider;
 import com.apiframework.splunk.config.SplunkConnectionConfig;
 import com.apiframework.splunk.config.SplunkSearchConfig;
 import com.apiframework.splunk.model.SplunkJobStatus;

@@ -1,6 +1,6 @@
-package com.apiframework.core.http;
+package com.apiframework.http;
 
-import com.apiframework.core.model.ApiResponse;
+import com.apiframework.model.ApiResponse;
 
 import java.util.Map;
 

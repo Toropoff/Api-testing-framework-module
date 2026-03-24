@@ -5,6 +5,8 @@ import com.apiframework.testsupport.base.TestExecutionContext;
 import com.apiframework.testsupport.retry.FrameworkRetryAnalyzer;
 import io.qameta.allure.Allure;
 import io.qameta.allure.model.Label;
+import io.qameta.allure.restassured.AllureRestAssured;
+import io.restassured.RestAssured;
 import org.testng.ITestContext;
 import org.testng.ITestListener;
 import org.testng.ITestResult;
@@ -22,6 +24,11 @@ import java.util.Map;
  * (these belong to the HTTP reporting filter layer).
  */
 public final class AllureTestNgListener implements ITestListener {
+    @Override
+    public void onStart(ITestContext context) {
+        RestAssured.filters(new AllureRestAssured());
+    }
+
     @Override
     public void onTestStart(ITestResult result) {
         attachContextLabels(result);

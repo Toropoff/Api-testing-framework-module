@@ -1,13 +1,10 @@
 package com.apiframework.testsupport.base;
 
-import com.apiframework.core.auth.AuthStrategy;
-import com.apiframework.core.client.ApiClientFactory;
-import com.apiframework.core.config.ConfigResolver;
-import com.apiframework.core.config.FrameworkRuntimeConfig;
-import com.apiframework.core.filter.CorrelationIdFilter;
-import com.apiframework.core.filter.FilterPolicyProvider;
-import com.apiframework.core.filter.HttpFilterPolicy;
-import com.apiframework.core.http.HttpClient;
+import com.apiframework.auth.AuthStrategy;
+import com.apiframework.client.ApiClientFactory;
+import com.apiframework.config.ConfigResolver;
+import com.apiframework.config.FrameworkRuntimeConfig;
+import com.apiframework.http.HttpClient;
 import com.apiframework.testsupport.network.NetworkAwareMethodListener;
 import org.testng.ITestResult;
 import org.testng.Reporter;
@@ -21,7 +18,6 @@ import org.testng.annotations.Listeners;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.ServiceLoader;
 import java.util.UUID;
 import java.util.function.Function;
 
@@ -48,7 +44,7 @@ public abstract class BaseApiTest {
             throw new SkipException("Live API tests are disabled. Set -Dframework.runLiveTests=true");
         }
 
-        this.httpClient = ApiClientFactory.create(baseUrl(), runtimeConfig, authStrategy(), filterPolicy());
+        this.httpClient = ApiClientFactory.create(baseUrl(), runtimeConfig, authStrategy());
     }
 
     @BeforeMethod(alwaysRun = true)
@@ -61,7 +57,7 @@ public abstract class BaseApiTest {
         );
 
         result.setAttribute(TEST_CONTEXT_ATTRIBUTE, testContext);
-        result.setAttribute(CorrelationIdFilter.HEADER_NAME, testContext.correlationId());
+        result.setAttribute("X-Correlation-Id", testContext.correlationId());
         Reporter.log("[framework] testContext=" + testContext, true);
     }
 
@@ -74,13 +70,6 @@ public abstract class BaseApiTest {
 
     protected AuthStrategy authStrategy() {
         return AuthStrategy.none();
-    }
-
-    protected HttpFilterPolicy filterPolicy() {
-        return ServiceLoader.load(FilterPolicyProvider.class)
-            .findFirst()
-            .map(FilterPolicyProvider::provide)
-            .orElse(HttpFilterPolicy.defaultPolicy());
     }
 
     /**

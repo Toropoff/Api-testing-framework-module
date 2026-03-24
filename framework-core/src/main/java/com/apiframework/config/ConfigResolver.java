@@ -1,6 +1,6 @@
-package com.apiframework.core.config;
+package com.apiframework.config;
 
-import com.apiframework.core.model.HttpRetryPolicy;
+import com.apiframework.model.HttpRetryPolicy;
 
 import java.time.Duration;
 import java.util.Set;

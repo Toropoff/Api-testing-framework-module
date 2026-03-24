@@ -1,10 +1,9 @@
-package com.apiframework.core.http;
+package com.apiframework.http;
 
-import com.apiframework.core.auth.AuthStrategy;
-import com.apiframework.core.filter.CorrelationIdFilter;
-import com.apiframework.core.json.JacksonProvider;
-import com.apiframework.core.model.ApiResponse;
-import com.apiframework.core.model.HttpRetryPolicy;
+import com.apiframework.auth.AuthStrategy;
+import com.apiframework.json.JacksonProvider;
+import com.apiframework.model.ApiResponse;
+import com.apiframework.model.HttpRetryPolicy;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.RestAssured;
@@ -142,7 +141,7 @@ public final class RestAssuredHttpClient implements HttpClient {
         T body = deserializeBody(rawBody, responseType);
         Map<String, String> headers = new LinkedHashMap<>();
         response.getHeaders().asList().forEach(header -> headers.put(header.getName(), header.getValue()));
-        String correlationId = headers.get(CorrelationIdFilter.HEADER_NAME);
+        String correlationId = headers.get("X-Correlation-Id");
 
         return new ApiResponse<>(
             response.statusCode(),

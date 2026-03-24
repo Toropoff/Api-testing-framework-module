@@ -1,4 +1,4 @@
-package com.apiframework.core.auth;
+package com.apiframework.auth;
 
 import io.restassured.specification.RequestSpecification;
 

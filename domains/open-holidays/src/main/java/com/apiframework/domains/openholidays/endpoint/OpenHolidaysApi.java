@@ -1,8 +1,8 @@
 package com.apiframework.domains.openholidays.endpoint;
 
-import com.apiframework.core.config.DomainConfig;
-import com.apiframework.core.http.HttpClient;
-import com.apiframework.core.model.ApiResponse;
+import com.apiframework.config.DomainConfig;
+import com.apiframework.http.HttpClient;
+import com.apiframework.model.ApiResponse;
 import com.apiframework.domains.openholidays.model.SubdivisionResponse;
 
 import java.util.Map;
