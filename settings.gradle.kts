@@ -6,7 +6,6 @@ include(
     "framework-db-oracle",
     "framework-messaging-rabbitmq",
     "framework-splunk",
-    "framework-contracts",
     "framework-reporting",
     ":domains:postman-echo",
     ":domains:open-holidays",

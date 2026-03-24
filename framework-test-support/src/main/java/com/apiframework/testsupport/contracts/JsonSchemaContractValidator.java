@@ -1,4 +1,4 @@
-package com.apiframework.contracts;
+package com.apiframework.testsupport.contracts;
 
 import com.apiframework.core.json.JacksonProvider;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -11,6 +11,10 @@ import com.networknt.schema.ValidationMessage;
 import java.io.InputStream;
 import java.util.Set;
 
+/**
+ * Validates a JSON response body against a JSON Schema definition loaded from the classpath.
+ * Catches structural drift: missing fields, type changes, unexpected properties.
+ */
 public final class JsonSchemaContractValidator {
     private final ObjectMapper objectMapper;
 
@@ -19,11 +23,11 @@ public final class JsonSchemaContractValidator {
     }
 
     public void assertMatchesSchema(String payloadJson, String classpathSchemaLocation) {
-        try (InputStream schemaStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(classpathSchemaLocation)) {
+        try (InputStream schemaStream = Thread.currentThread().getContextClassLoader()
+                .getResourceAsStream(classpathSchemaLocation)) {
             if (schemaStream == null) {
                 throw new IllegalArgumentException("Schema not found in classpath: " + classpathSchemaLocation);
             }
-
             JsonNode schemaNode = objectMapper.readTree(schemaStream);
             JsonNode payloadNode = objectMapper.readTree(payloadJson);
 
