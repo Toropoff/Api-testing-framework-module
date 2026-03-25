@@ -5,7 +5,6 @@ import com.apiframework.model.ApiResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.RestAssured;
-import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
 
@@ -63,12 +62,12 @@ public final class RestAssuredHttpClient implements HttpClient {
 
     @Override
     public ApiResponse<String> getRaw(String path) {
-        return getRaw(path, Map.of());
+        return get(path, Map.of(), String.class);
     }
 
     @Override
     public ApiResponse<String> getRaw(String path, Map<String, ?> queryParams) {
-        return execute(path, "GET", null, queryParams, String.class);
+        return get(path, queryParams, String.class);
     }
 
     // --- internals ---
@@ -76,18 +75,10 @@ public final class RestAssuredHttpClient implements HttpClient {
     private <T> ApiResponse<T> execute(
         String path, String method, Object body, Map<String, ?> queryParams, Class<T> responseType
     ) {
-        Response response = executeOnce(path, method, body, queryParams);
-        String rawBody = response.getBody() == null ? "" : response.getBody().asString();
-        return toApiResponse(response, rawBody, responseType);
-    }
-
-    private Response executeOnce(String path, String method, Object body, Map<String, ?> queryParams) {
         Objects.requireNonNull(method, "HTTP method must not be null");
         Objects.requireNonNull(path, "Request path must not be null");
 
-        RequestSpecification spec = RestAssured
-            .given()
-            .spec(new RequestSpecBuilder().addRequestSpecification(baseSpec).build());
+        RequestSpecification spec = RestAssured.given().spec(baseSpec);
 
         if (queryParams != null && !queryParams.isEmpty()) {
             spec.queryParams(queryParams);
@@ -97,7 +88,7 @@ public final class RestAssuredHttpClient implements HttpClient {
             spec.body(body);
         }
 
-        return switch (method) {
+        Response response = switch (method) {
             case "GET" -> spec.get(path);
             case "POST" -> spec.post(path);
             case "PUT" -> spec.put(path);
@@ -105,6 +96,9 @@ public final class RestAssuredHttpClient implements HttpClient {
             case "DELETE" -> spec.delete(path);
             default -> throw new IllegalArgumentException("Unsupported HTTP method: " + method);
         };
+
+        String rawBody = response.getBody() == null ? "" : response.getBody().asString();
+        return toApiResponse(response, rawBody, responseType);
     }
 
     private <T> ApiResponse<T> toApiResponse(Response response, String rawBody, Class<T> responseType) {
