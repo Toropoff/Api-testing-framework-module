@@ -1,7 +1,7 @@
 package com.apiframework.splunk.config;
 
-import com.apiframework.config.EnvSecretsProvider;
-import com.apiframework.config.SecretsProvider;
+import com.apiframework.splunk.config.EnvSecretsProvider;
+import com.apiframework.splunk.config.SecretsProvider;
 
 import java.util.List;
 import java.util.Optional;

@@ -1,6 +1,5 @@
 package com.apiframework.testsupport.base;
 
-import com.apiframework.auth.AuthStrategy;
 import com.apiframework.client.ApiClientFactory;
 import com.apiframework.config.ConfigResolver;
 import com.apiframework.config.FrameworkRuntimeConfig;
@@ -39,7 +38,7 @@ public abstract class BaseApiTest {
             initRuntimeConfig();
         }
 
-        this.httpClient = ApiClientFactory.create(baseUrl(), runtimeConfig, authStrategy());
+        this.httpClient = ApiClientFactory.create(baseUrl(), runtimeConfig);
     }
 
     @BeforeMethod(alwaysRun = true)
@@ -63,10 +62,6 @@ public abstract class BaseApiTest {
 
     protected abstract String baseUrl();
 
-    protected AuthStrategy authStrategy() {
-        return AuthStrategy.none();
-    }
-
     protected <T> T api(Function<HttpClient, T> apiFactory) {
         return apiFactory.apply(httpClient());
     }
@@ -81,6 +76,7 @@ public abstract class BaseApiTest {
     protected Map<String, String> environmentTags() {
         Map<String, String> tags = new LinkedHashMap<>();
         tags.put("profile", runtimeConfig.profile());
+        tags.put("env", runtimeConfig.env());
         tags.put("baseUrl", baseUrl());
         return tags;
     }

@@ -15,17 +15,21 @@ public final class ConfigResolver {
     }
 
     public static FrameworkRuntimeConfig resolveFromSystem() {
+        String env = System.getenv("FRAMEWORK_ENV");
+        if (env == null || env.isBlank()) {
+            env = System.getProperty("framework.env", "dev");
+        }
+
         return new FrameworkRuntimeConfig(
             System.getProperty("framework.profile", "dev"),
+            env,
             Integer.getInteger("http.connectTimeoutMs", 5000),
             Integer.getInteger("http.readTimeoutMs", 15000),
             new HttpRetryPolicy(
                 Integer.getInteger("http.retry.maxAttempts", 1),
                 Duration.ofMillis(Long.getLong("http.retry.delayMs", 0L)),
                 Set.of(429, 500, 502, 503, 504)
-            ),
-            System.getProperty("auth.basic.username", ""),
-            System.getProperty("auth.basic.password", "")
+            )
         );
     }
 }

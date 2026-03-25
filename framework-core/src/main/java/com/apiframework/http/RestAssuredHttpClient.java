@@ -1,6 +1,5 @@
 package com.apiframework.http;
 
-import com.apiframework.auth.AuthStrategy;
 import com.apiframework.json.JacksonProvider;
 import com.apiframework.model.ApiResponse;
 import com.apiframework.model.HttpRetryPolicy;
@@ -25,22 +24,19 @@ public final class RestAssuredHttpClient implements HttpClient {
     private static final Logger LOGGER = LoggerFactory.getLogger(RestAssuredHttpClient.class);
 
     private final RequestSpecification baseSpec;
-    private final AuthStrategy authStrategy;
     private final HttpRetryPolicy defaultRetryPolicy;
     private final ObjectMapper objectMapper;
 
-    public RestAssuredHttpClient(RequestSpecification baseSpec, AuthStrategy authStrategy, HttpRetryPolicy defaultRetryPolicy) {
-        this(baseSpec, authStrategy, defaultRetryPolicy, JacksonProvider.defaultMapper());
+    public RestAssuredHttpClient(RequestSpecification baseSpec, HttpRetryPolicy defaultRetryPolicy) {
+        this(baseSpec, defaultRetryPolicy, JacksonProvider.defaultMapper());
     }
 
     public RestAssuredHttpClient(
         RequestSpecification baseSpec,
-        AuthStrategy authStrategy,
         HttpRetryPolicy defaultRetryPolicy,
         ObjectMapper objectMapper
     ) {
         this.baseSpec = baseSpec;
-        this.authStrategy = authStrategy;
         this.defaultRetryPolicy = defaultRetryPolicy;
         this.objectMapper = objectMapper;
     }
@@ -116,8 +112,6 @@ public final class RestAssuredHttpClient implements HttpClient {
         RequestSpecification spec = RestAssured
             .given()
             .spec(new RequestSpecBuilder().addRequestSpecification(baseSpec).build());
-
-        authStrategy.apply(spec);
 
         if (queryParams != null && !queryParams.isEmpty()) {
             spec.queryParams(queryParams);
