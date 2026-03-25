@@ -4,13 +4,11 @@ import com.apiframework.testsupport.contracts.JsonSchemaContractValidator;
 import com.apiframework.testsupport.contracts.SnapshotContractValidator;
 import com.apiframework.domains.postmanecho.endpoint.PostmanEchoApi;
 import com.apiframework.testsupport.base.BaseApiTest;
-import com.apiframework.testsupport.base.LiveApi;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@LiveApi
 public class PostmanEchoIntegrationTest extends BaseApiTest {
     private PostmanEchoApi echoApi;
     private JsonSchemaContractValidator schemaValidator;

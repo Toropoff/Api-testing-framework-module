@@ -3,7 +3,6 @@ package com.apiframework.tests.regression;
 import com.apiframework.domains.postmanecho.endpoint.PostmanEchoApi;
 import com.apiframework.domains.postmanecho.model.EchoPayload;
 import com.apiframework.testsupport.base.BaseApiTest;
-import com.apiframework.testsupport.base.LiveApi;
 import com.apiframework.testsupport.retry.RetrySetting;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
@@ -11,7 +10,6 @@ import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@LiveApi
 @RetrySetting(maxRetries = 2, delayMs = 200)
 public class PostmanEchoRegressionTest extends BaseApiTest {
     private PostmanEchoApi echoApi;

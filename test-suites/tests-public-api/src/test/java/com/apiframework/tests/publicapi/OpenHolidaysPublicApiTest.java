@@ -3,13 +3,11 @@ package com.apiframework.tests.publicapi;
 import com.apiframework.domains.openholidays.endpoint.OpenHolidaysApi;
 import com.apiframework.domains.openholidays.model.SubdivisionResponse;
 import com.apiframework.testsupport.base.BaseApiTest;
-import com.apiframework.testsupport.base.LiveApi;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@LiveApi
 public class OpenHolidaysPublicApiTest extends BaseApiTest {
     private OpenHolidaysApi openHolidaysApi;
 

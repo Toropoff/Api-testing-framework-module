@@ -2,13 +2,11 @@ package com.apiframework.tests.smoke;
 
 import com.apiframework.domains.postmanecho.endpoint.PostmanEchoApi;
 import com.apiframework.testsupport.base.BaseApiTest;
-import com.apiframework.testsupport.base.LiveApi;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@LiveApi
 public class PostmanEchoSmokeTest extends BaseApiTest {
     private PostmanEchoApi echoApi;
 

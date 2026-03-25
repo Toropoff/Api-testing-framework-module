@@ -8,7 +8,6 @@ import com.apiframework.http.HttpClient;
 import com.apiframework.testsupport.network.NetworkAwareMethodListener;
 import org.testng.ITestResult;
 import org.testng.Reporter;
-import org.testng.SkipException;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
@@ -40,10 +39,6 @@ public abstract class BaseApiTest {
             initRuntimeConfig();
         }
 
-        if (isLiveApi() && !Boolean.parseBoolean(System.getProperty("framework.runLiveTests", "false"))) {
-            throw new SkipException("Live API tests are disabled. Set -Dframework.runLiveTests=true");
-        }
-
         this.httpClient = ApiClientFactory.create(baseUrl(), runtimeConfig, authStrategy());
     }
 
@@ -72,18 +67,6 @@ public abstract class BaseApiTest {
         return AuthStrategy.none();
     }
 
-    /**
-     * @deprecated Override kept for backward compatibility. Prefer {@link LiveApi} annotation.
-     */
-    @Deprecated
-    protected boolean requiresLiveApi() {
-        return false;
-    }
-
-    private boolean isLiveApi() {
-        return getClass().isAnnotationPresent(LiveApi.class) || requiresLiveApi();
-    }
-
     protected <T> T api(Function<HttpClient, T> apiFactory) {
         return apiFactory.apply(httpClient());
     }
@@ -99,7 +82,6 @@ public abstract class BaseApiTest {
         Map<String, String> tags = new LinkedHashMap<>();
         tags.put("profile", runtimeConfig.profile());
         tags.put("baseUrl", baseUrl());
-        tags.put("liveTests", System.getProperty("framework.runLiveTests", "false"));
         return tags;
     }
 }
