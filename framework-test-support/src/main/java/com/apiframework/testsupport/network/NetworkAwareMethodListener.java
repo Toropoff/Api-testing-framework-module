@@ -39,7 +39,7 @@ public final class NetworkAwareMethodListener implements IInvokedMethodListener 
 
     /**
      * Walks the cause chain looking for network connectivity exceptions.
-     * Used by the listener and by {@link com.apiframework.testsupport.retry.DefaultRetryPredicate}.
+     * Used by the listener and by {@link com.apiframework.testsupport.retry.FrameworkRetryAnalyzer}.
      */
     public static boolean hasNetworkCause(Throwable ex) {
         Throwable current = ex;

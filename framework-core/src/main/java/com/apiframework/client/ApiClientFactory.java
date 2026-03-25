@@ -14,7 +14,7 @@ import static io.restassured.RestAssured.preemptive;
 
 /**
  * Factory that assembles the HTTP client stack: RequestSpecification (timeouts, filters,
- * content type, credentials) + RetryPolicy &rarr; RestAssuredHttpClient.
+ * content type, credentials) &rarr; RestAssuredHttpClient.
  * Credentials are injected from FRAMEWORK_CLIENT_NAME / FRAMEWORK_CLIENT_SECRET env vars.
  */
 public final class ApiClientFactory {
@@ -41,6 +41,6 @@ public final class ApiClientFactory {
             specBuilder.setAuth(preemptive().basic(clientName, clientSecret));
         }
 
-        return new RestAssuredHttpClient(specBuilder.build(), config.httpRetryPolicy());
+        return new RestAssuredHttpClient(specBuilder.build());
     }
 }

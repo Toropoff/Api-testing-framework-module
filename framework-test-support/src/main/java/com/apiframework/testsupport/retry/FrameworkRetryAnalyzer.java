@@ -1,5 +1,6 @@
 package com.apiframework.testsupport.retry;
 
+import com.apiframework.testsupport.network.NetworkAwareMethodListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.IRetryAnalyzer;
@@ -21,9 +22,8 @@ public final class FrameworkRetryAnalyzer implements IRetryAnalyzer {
     public boolean retry(ITestResult result) {
         RetryRuntimePolicy policy = resolvePolicy(result);
         Throwable failure = result.getThrowable();
-        RetryPredicate retryPredicate = RetryConfiguration.retryPredicate();
 
-        if (!retryPredicate.shouldRetry(result, failure)) {
+        if (!shouldRetry(failure)) {
             result.setAttribute(RETRIED_ATTRIBUTE, false);
             result.setAttribute(RETRY_REASON_ATTRIBUTE, "non-retryable failure");
             return false;
@@ -42,35 +42,41 @@ public final class FrameworkRetryAnalyzer implements IRetryAnalyzer {
         result.setAttribute(RETRIED_ATTRIBUTE, true);
         result.setAttribute(RETRY_REASON_ATTRIBUTE, failure == null ? "unknown" : failure.getClass().getSimpleName());
 
-        LOGGER.warn(
-            "Retrying test {}. Attempt {} of {}",
-            result.getName(),
-            nextRunNumber,
-            policy.maxAttempts()
-        );
+        LOGGER.warn("Retrying test {}. Attempt {} of {}", result.getName(), nextRunNumber, policy.maxAttempts());
 
-        long delayMs = RetryConfiguration.retryDelayStrategy().delayBeforeNextAttemptMs(failedAttemptCount, policy);
+        long delayMs = policy.baseDelayMs();
         if (delayMs > 0) {
             LockSupport.parkNanos(delayMs * 1_000_000L);
         }
         return true;
     }
 
+    // Inlined from DefaultRetryPredicate
+    private boolean shouldRetry(Throwable failure) {
+        if (failure == null) return false;
+        if (failure instanceof AssertionError) return false;
+        if (NetworkAwareMethodListener.hasNetworkCause(failure)) return true;
+        String message = failure.getMessage() == null ? "" : failure.getMessage().toLowerCase();
+        return message.contains("timeout") || message.contains("connection reset")
+            || message.contains("502") || message.contains("503") || message.contains("504");
+    }
+
+    // Inlined from RetryConfiguration.globalPolicy()
     private RetryRuntimePolicy resolvePolicy(ITestResult result) {
-        RetryRuntimePolicy global = RetryConfiguration.globalPolicy();
+        int maxRetries = Integer.parseInt(
+            System.getProperty("test.retry.maxRetries", System.getProperty("test.retry.maxAttempts", "1"))
+        );
+        long delayMs = Long.parseLong(System.getProperty("test.retry.delayMs", "0"));
+        RetryRuntimePolicy global = new RetryRuntimePolicy(maxRetries, delayMs);
 
         Method method = result.getMethod().getConstructorOrMethod().getMethod();
         if (method != null) {
             RetrySetting methodPolicy = method.getAnnotation(RetrySetting.class);
-            if (methodPolicy != null) {
-                return merge(global, methodPolicy);
-            }
+            if (methodPolicy != null) return merge(global, methodPolicy);
         }
 
         RetrySetting classPolicy = result.getTestClass().getRealClass().getAnnotation(RetrySetting.class);
-        if (classPolicy != null) {
-            return merge(global, classPolicy);
-        }
+        if (classPolicy != null) return merge(global, classPolicy);
 
         return global;
     }

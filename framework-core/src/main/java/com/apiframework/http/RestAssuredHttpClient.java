@@ -2,15 +2,12 @@ package com.apiframework.http;
 
 import com.apiframework.json.JacksonProvider;
 import com.apiframework.model.ApiResponse;
-import com.apiframework.model.HttpRetryPolicy;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -21,23 +18,16 @@ import java.util.Objects;
  * REST Assured is a non-replaceable foundation of this framework.
  */
 public final class RestAssuredHttpClient implements HttpClient {
-    private static final Logger LOGGER = LoggerFactory.getLogger(RestAssuredHttpClient.class);
 
     private final RequestSpecification baseSpec;
-    private final HttpRetryPolicy defaultRetryPolicy;
     private final ObjectMapper objectMapper;
 
-    public RestAssuredHttpClient(RequestSpecification baseSpec, HttpRetryPolicy defaultRetryPolicy) {
-        this(baseSpec, defaultRetryPolicy, JacksonProvider.defaultMapper());
+    public RestAssuredHttpClient(RequestSpecification baseSpec) {
+        this(baseSpec, JacksonProvider.defaultMapper());
     }
 
-    public RestAssuredHttpClient(
-        RequestSpecification baseSpec,
-        HttpRetryPolicy defaultRetryPolicy,
-        ObjectMapper objectMapper
-    ) {
+    public RestAssuredHttpClient(RequestSpecification baseSpec, ObjectMapper objectMapper) {
         this.baseSpec = baseSpec;
-        this.defaultRetryPolicy = defaultRetryPolicy;
         this.objectMapper = objectMapper;
     }
 
@@ -48,27 +38,27 @@ public final class RestAssuredHttpClient implements HttpClient {
 
     @Override
     public <T> ApiResponse<T> get(String path, Map<String, ?> queryParams, Class<T> responseType) {
-        return executeWithRetry(path, "GET", null, queryParams, responseType);
+        return execute(path, "GET", null, queryParams, responseType);
     }
 
     @Override
     public <T> ApiResponse<T> post(String path, Object body, Class<T> responseType) {
-        return executeWithRetry(path, "POST", body, Map.of(), responseType);
+        return execute(path, "POST", body, Map.of(), responseType);
     }
 
     @Override
     public <T> ApiResponse<T> put(String path, Object body, Class<T> responseType) {
-        return executeWithRetry(path, "PUT", body, Map.of(), responseType);
+        return execute(path, "PUT", body, Map.of(), responseType);
     }
 
     @Override
     public <T> ApiResponse<T> patch(String path, Object body, Class<T> responseType) {
-        return executeWithRetry(path, "PATCH", body, Map.of(), responseType);
+        return execute(path, "PATCH", body, Map.of(), responseType);
     }
 
     @Override
     public <T> ApiResponse<T> delete(String path, Class<T> responseType) {
-        return executeWithRetry(path, "DELETE", null, Map.of(), responseType);
+        return execute(path, "DELETE", null, Map.of(), responseType);
     }
 
     @Override
@@ -78,31 +68,17 @@ public final class RestAssuredHttpClient implements HttpClient {
 
     @Override
     public ApiResponse<String> getRaw(String path, Map<String, ?> queryParams) {
-        return executeWithRetry(path, "GET", null, queryParams, String.class);
+        return execute(path, "GET", null, queryParams, String.class);
     }
 
     // --- internals ---
 
-    private <T> ApiResponse<T> executeWithRetry(
+    private <T> ApiResponse<T> execute(
         String path, String method, Object body, Map<String, ?> queryParams, Class<T> responseType
     ) {
-        for (int attempt = 1; attempt <= defaultRetryPolicy.maxAttempts(); attempt++) {
-            Response response = executeOnce(path, method, body, queryParams);
-            String rawBody = response.getBody() == null ? "" : response.getBody().asString();
-
-            boolean shouldRetry = attempt < defaultRetryPolicy.maxAttempts()
-                && defaultRetryPolicy.retryableStatusCodes().contains(response.statusCode());
-
-            if (shouldRetry) {
-                LOGGER.warn("HTTP retry attempt {}/{} due to status {}", attempt, defaultRetryPolicy.maxAttempts(), response.statusCode());
-                sleepQuietly(defaultRetryPolicy.delayBetweenAttempts().toMillis());
-                continue;
-            }
-
-            return toApiResponse(response, rawBody, responseType);
-        }
-
-        throw new IllegalStateException("Exhausted HTTP retries without a final response");
+        Response response = executeOnce(path, method, body, queryParams);
+        String rawBody = response.getBody() == null ? "" : response.getBody().asString();
+        return toApiResponse(response, rawBody, responseType);
     }
 
     private Response executeOnce(String path, String method, Object body, Map<String, ?> queryParams) {
@@ -158,18 +134,6 @@ public final class RestAssuredHttpClient implements HttpClient {
             return objectMapper.readValue(rawBody, responseType);
         } catch (JsonProcessingException exception) {
             throw new IllegalStateException("Unable to deserialize response body", exception);
-        }
-    }
-
-    private void sleepQuietly(long millis) {
-        if (millis <= 0) {
-            return;
-        }
-        try {
-            Thread.sleep(millis);
-        } catch (InterruptedException interruptedException) {
-            Thread.currentThread().interrupt();
-            throw new IllegalStateException("Retry sleep interrupted", interruptedException);
         }
     }
 }
