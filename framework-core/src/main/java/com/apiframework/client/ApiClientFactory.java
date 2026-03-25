@@ -15,13 +15,15 @@ import static io.restassured.RestAssured.preemptive;
 /**
  * Factory that assembles the HTTP client stack: RequestSpecification (timeouts, filters,
  * content type, credentials) &rarr; RestAssuredHttpClient.
- * Credentials are injected from FRAMEWORK_CLIENT_NAME / FRAMEWORK_CLIENT_SECRET env vars.
+ * Full URL is composed as rootUrl + basePath. Credentials injected from env vars.
  */
 public final class ApiClientFactory {
     private ApiClientFactory() {
     }
 
-    public static HttpClient create(String baseUrl, FrameworkRuntimeConfig config) {
+    public static HttpClient create(String basePath, FrameworkRuntimeConfig config) {
+        String baseUrl = config.rootUrl() + basePath;
+
         RestAssuredConfig restAssuredConfig = RestAssuredConfig.config().httpClient(
             HttpClientConfig.httpClientConfig()
                 .setParam("http.connection.timeout", config.connectTimeoutMs())

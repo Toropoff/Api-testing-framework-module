@@ -11,7 +11,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class OpenHolidaysPublicApiTest extends BaseApiTest {
     private OpenHolidaysApi openHolidaysApi;
 
-    @Override protected String baseUrl() { return OpenHolidaysApi.baseUrl(); }
+    @Override protected String basePath() { return OpenHolidaysApi.basePath(); }
 
     @BeforeClass(alwaysRun = true, dependsOnMethods = "initHttpClient")
     public void init() {

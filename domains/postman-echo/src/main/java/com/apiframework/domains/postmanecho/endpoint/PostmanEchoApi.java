@@ -11,10 +11,16 @@ import java.util.Map;
 import java.util.Objects;
 
 public final class PostmanEchoApi {
-    private static final String BASE_URL = DomainConfig.loadBaseUrl(PostmanEchoApi.class, "postman-echo.properties");
+    private static final String BASE_PATH = DomainConfig.loadBasePath(
+        PostmanEchoApi.class,
+        "postman-echo.properties",
+        System.getenv("FRAMEWORK_ENV") != null
+            ? System.getenv("FRAMEWORK_ENV")
+            : System.getProperty("framework.env", "dev")
+    );
 
-    public static String baseUrl() {
-        return BASE_URL;
+    public static String basePath() {
+        return BASE_PATH;
     }
 
     private final HttpClient httpClient;

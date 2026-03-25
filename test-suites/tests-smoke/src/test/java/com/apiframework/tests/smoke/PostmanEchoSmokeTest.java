@@ -10,7 +10,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class PostmanEchoSmokeTest extends BaseApiTest {
     private PostmanEchoApi echoApi;
 
-    @Override protected String baseUrl() { return PostmanEchoApi.baseUrl(); }
+    @Override protected String basePath() { return PostmanEchoApi.basePath(); }
 
     @BeforeClass(alwaysRun = true, dependsOnMethods = "initHttpClient")
     public void init() {

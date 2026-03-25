@@ -38,7 +38,7 @@ public abstract class BaseApiTest {
             initRuntimeConfig();
         }
 
-        this.httpClient = ApiClientFactory.create(baseUrl(), runtimeConfig);
+        this.httpClient = ApiClientFactory.create(basePath(), runtimeConfig);
     }
 
     @BeforeMethod(alwaysRun = true)
@@ -60,7 +60,7 @@ public abstract class BaseApiTest {
         Reporter.log("[framework] completed=" + testContext.testId() + " status=" + result.getStatus(), true);
     }
 
-    protected abstract String baseUrl();
+    protected abstract String basePath();
 
     protected <T> T api(Function<HttpClient, T> apiFactory) {
         return apiFactory.apply(httpClient());
@@ -77,7 +77,7 @@ public abstract class BaseApiTest {
         Map<String, String> tags = new LinkedHashMap<>();
         tags.put("profile", runtimeConfig.profile());
         tags.put("env", runtimeConfig.env());
-        tags.put("baseUrl", baseUrl());
+        tags.put("baseUrl", basePath());
         return tags;
     }
 }

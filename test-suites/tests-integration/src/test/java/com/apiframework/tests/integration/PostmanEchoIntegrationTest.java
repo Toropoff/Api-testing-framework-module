@@ -14,7 +14,7 @@ public class PostmanEchoIntegrationTest extends BaseApiTest {
     private JsonSchemaContractValidator schemaValidator;
     private SnapshotContractValidator snapshotValidator;
 
-    @Override protected String baseUrl() { return PostmanEchoApi.baseUrl(); }
+    @Override protected String basePath() { return PostmanEchoApi.basePath(); }
 
     @BeforeClass(alwaysRun = true, dependsOnMethods = "initHttpClient")
     public void init() {
