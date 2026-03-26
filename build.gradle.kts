@@ -22,6 +22,8 @@ allprojects {
 
 val aggregatedAllureResultsDir = layout.buildDirectory.dir("allure-results")
 val previousAllureHistoryDir = layout.buildDirectory.dir("reports/allure-report/allureReport/history")
+val allureEnvDir = layout.projectDirectory.dir("framework-reporting/allure-results")
+
 val suiteAllureResultDirs = listOf(
     layout.projectDirectory.dir("test-suites/tests-smoke/allure-results"),
     layout.projectDirectory.dir("test-suites/tests-regression/allure-results"),
@@ -31,7 +33,9 @@ val suiteAllureResultDirs = listOf(
     layout.projectDirectory.dir("test-suites/tests-smoke/build/allure-results"),
     layout.projectDirectory.dir("test-suites/tests-regression/build/allure-results"),
     layout.projectDirectory.dir("test-suites/tests-integration/build/allure-results"),
-    layout.projectDirectory.dir("test-suites/tests-public-api/build/allure-results")
+    layout.projectDirectory.dir("test-suites/tests-public-api/build/allure-results"),
+    // Single environment.properties written by AllureEnvironmentWriter for all suites.
+    allureEnvDir
 )
 
 val allureSuiteTaskPaths = listOf(
@@ -57,6 +61,7 @@ tasks.register("collectAllureResults") {
             suiteAllureResultDirs.forEach { from(it) }
             into(outputDir)
             includeEmptyDirs = false
+            duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         }
 
         if (previousHistoryDir.exists()) {
@@ -147,6 +152,8 @@ subprojects {
         if (!systemProperties.containsKey("framework.profile")) {
             systemProperty("framework.profile", "dev")
         }
+
+        systemProperty("allure.env.dir", allureEnvDir.asFile.absolutePath)
 
         if (forceAllureSuiteRun && path in allureSuiteTestTasks) {
             outputs.upToDateWhen { false }

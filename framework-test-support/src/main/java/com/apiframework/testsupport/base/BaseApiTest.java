@@ -4,7 +4,9 @@ import com.apiframework.client.ApiClientFactory;
 import com.apiframework.config.ConfigResolver;
 import com.apiframework.config.FrameworkRuntimeConfig;
 import com.apiframework.http.HttpClient;
+import com.apiframework.testsupport.allure.AllureEnvironmentWriter;
 import com.apiframework.testsupport.network.NetworkAwareMethodListener;
+import io.qameta.allure.Allure;
 import org.testng.ITestResult;
 import org.testng.Reporter;
 import org.testng.annotations.AfterMethod;
@@ -19,7 +21,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
 
-@Listeners(NetworkAwareMethodListener.class)
+@Listeners({NetworkAwareMethodListener.class, AllureEnvironmentWriter.class})
 public abstract class BaseApiTest {
     public static final String TEST_CONTEXT_ATTRIBUTE = "framework.test.context";
 
@@ -53,6 +55,7 @@ public abstract class BaseApiTest {
         result.setAttribute(TEST_CONTEXT_ATTRIBUTE, testContext);
         result.setAttribute("X-Correlation-Id", testContext.correlationId());
         Reporter.log("[framework] testContext=" + testContext, true);
+        Allure.label("parentSuite", targetApi());
     }
 
     @AfterMethod(alwaysRun = true)
@@ -61,6 +64,9 @@ public abstract class BaseApiTest {
     }
 
     protected abstract String basePath();
+
+    // Returns the logical API name shown in Allure parentSuite widget.
+    protected abstract String targetApi();
 
     protected <T> T api(Function<HttpClient, T> apiFactory) {
         return apiFactory.apply(httpClient());
