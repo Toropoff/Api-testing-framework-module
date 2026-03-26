@@ -4,6 +4,7 @@ import com.apiframework.domains.postmanecho.endpoint.PostmanEchoApi;
 import com.apiframework.domains.postmanecho.model.EchoPayload;
 import com.apiframework.testsupport.base.BaseApiTest;
 import com.apiframework.testsupport.retry.RetrySetting;
+import io.qameta.allure.Allure;
 import io.qameta.allure.Description;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
@@ -37,10 +38,12 @@ public class PostmanEchoRegressionTest extends BaseApiTest {
     public void shouldEchoJsonPayloadOnPost(EchoPayload payload) {
         var response = echoApi.postEcho(payload);
 
-        assertThat(response.statusCode()).isEqualTo(200);
-        assertThat(response.body().json()).isNotNull();
-        assertThat(response.body().json().event()).isEqualTo(payload.event());
-        assertThat(response.body().json().amount()).isEqualTo(payload.amount());
-        assertThat(response.body().json().active()).isEqualTo(payload.active());
+        Allure.step("Validate status 200 and echoed JSON payload fields", () -> {
+            assertThat(response.statusCode()).isEqualTo(200);
+            assertThat(response.body().json()).isNotNull();
+            assertThat(response.body().json().event()).isEqualTo(payload.event());
+            assertThat(response.body().json().amount()).isEqualTo(payload.amount());
+            assertThat(response.body().json().active()).isEqualTo(payload.active());
+        });
     }
 }
