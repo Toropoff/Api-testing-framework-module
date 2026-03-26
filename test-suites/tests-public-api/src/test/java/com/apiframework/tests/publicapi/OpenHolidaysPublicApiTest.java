@@ -12,6 +12,7 @@ public class OpenHolidaysPublicApiTest extends BaseApiTest {
     private OpenHolidaysApi openHolidaysApi;
 
     @Override protected String basePath() { return OpenHolidaysApi.basePath(); }
+    @Override protected String targetApi() { return "open-holidays"; }
 
     @BeforeClass(alwaysRun = true, dependsOnMethods = "initHttpClient")
     public void init() {
