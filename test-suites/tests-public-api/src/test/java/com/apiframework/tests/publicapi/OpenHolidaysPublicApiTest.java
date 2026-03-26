@@ -3,6 +3,7 @@ package com.apiframework.tests.publicapi;
 import com.apiframework.domains.openholidays.endpoint.OpenHolidaysApi;
 import com.apiframework.domains.openholidays.model.SubdivisionResponse;
 import com.apiframework.testsupport.base.BaseApiTest;
+import io.qameta.allure.Description;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -19,6 +20,8 @@ public class OpenHolidaysPublicApiTest extends BaseApiTest {
         this.openHolidaysApi = api(OpenHolidaysApi::new);
     }
 
+    // TODO: Placeholder for the test scenario description
+    @Description("Verifies that GET /Subdivisions returns a non-empty list with valid isoCode, shortName, name, and officialLanguages for a known country code")
     @Test(description = "GET /Subdivisions should return a non-empty list for a valid countryIsoCode")
     public void shouldReturnSubdivisionsForValidCountry() {
         var response = openHolidaysApi.getSubdivisions("DE", "EN");
@@ -33,6 +36,8 @@ public class OpenHolidaysPublicApiTest extends BaseApiTest {
         assertThat(first.officialLanguages()).isNotEmpty();
     }
 
+    // TODO: Placeholder for the test scenario description
+    @Description("Verifies that GET /Subdivisions without a countryIsoCode query parameter returns 400 Bad Request")
     @Test(description = "GET /Subdivisions without countryIsoCode should return 400 Bad Request")
     public void shouldReturn400WhenCountryIsoCodeIsMissing() {
         var response = openHolidaysApi.getSubdivisionsRaw();

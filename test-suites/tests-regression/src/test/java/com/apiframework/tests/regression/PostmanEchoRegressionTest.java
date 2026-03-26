@@ -4,6 +4,7 @@ import com.apiframework.domains.postmanecho.endpoint.PostmanEchoApi;
 import com.apiframework.domains.postmanecho.model.EchoPayload;
 import com.apiframework.testsupport.base.BaseApiTest;
 import com.apiframework.testsupport.retry.RetrySetting;
+import io.qameta.allure.Description;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -30,6 +31,8 @@ public class PostmanEchoRegressionTest extends BaseApiTest {
         };
     }
 
+    // TODO: Placeholder for the test scenario description
+    @Description("Verifies that POST /post echoes all JSON payload fields back in the response body for each data variant")
     @Test(dataProvider = "echoPayloads", description = "POST /post should echo json payload")
     public void shouldEchoJsonPayloadOnPost(EchoPayload payload) {
         var response = echoApi.postEcho(payload);
