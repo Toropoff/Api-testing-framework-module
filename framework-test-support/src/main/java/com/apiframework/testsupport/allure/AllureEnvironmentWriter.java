@@ -19,14 +19,15 @@ public final class AllureEnvironmentWriter implements ISuiteListener {
     public void onFinish(ISuite suite) {
         try {
             String env = ConfigResolver.resolveFromSystem().env();
+            String outputDir = System.getProperty("allure.env.dir", "allure-results");
             Properties props = new Properties();
             props.setProperty("Environment", env);
-            Files.createDirectories(Paths.get("allure-results"));
-            try (FileWriter writer = new FileWriter("allure-results/environment.properties")) {
+            Files.createDirectories(Paths.get(outputDir));
+            try (FileWriter writer = new FileWriter(outputDir + "/environment.properties")) {
                 props.store(writer, null);
             }
         } catch (Exception e) {
-            log.error("Failed to write allure-results/environment.properties: {}", e.getMessage());
+            log.error("Failed to write environment.properties: {}", e.getMessage());
         }
     }
 }
