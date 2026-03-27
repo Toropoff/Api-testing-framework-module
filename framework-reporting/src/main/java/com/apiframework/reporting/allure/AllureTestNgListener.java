@@ -4,7 +4,6 @@ import com.apiframework.testsupport.base.BaseApiTest;
 import com.apiframework.testsupport.base.TestExecutionContext;
 import com.apiframework.testsupport.retry.FrameworkRetryAnalyzer;
 import io.qameta.allure.Allure;
-import io.qameta.allure.model.Label;
 import io.qameta.allure.restassured.AllureRestAssured;
 import io.restassured.RestAssured;
 import org.testng.ITestContext;
@@ -18,7 +17,7 @@ import java.util.Map;
 /**
  * Test lifecycle reporting listener for Allure.
  * <p>
- * Responsible for test-level labels, retry metadata, failure stacktrace and run summary.
+ * Responsible for test-level labels, retry metadata and failure stacktrace.
  * <p>
  * Not responsible for per-request HTTP step creation or request/response attachments
  * (these belong to the HTTP reporting filter layer).
@@ -32,12 +31,6 @@ public final class AllureTestNgListener implements ITestListener {
     @Override
     public void onTestStart(ITestResult result) {
         attachContextLabels(result);
-        attachRetryMetadata(result);
-    }
-
-    @Override
-    public void onTestSuccess(ITestResult result) {
-        attachRetryMetadata(result);
     }
 
     @Override
@@ -48,22 +41,12 @@ public final class AllureTestNgListener implements ITestListener {
         }
     }
 
-    @Override
-    public void onFinish(ITestContext context) {
-        Allure.addAttachment(
-            "Test run summary",
-            "text/plain",
-            "passed=" + context.getPassedTests().size()
-                + ", failed=" + context.getFailedTests().size()
-                + ", skipped=" + context.getSkippedTests().size(),
-            ".txt"
-        );
-    }
-
     private void attachRetryMetadata(ITestResult result) {
         Object retry = result.getAttribute(FrameworkRetryAnalyzer.RETRY_ATTEMPT_ATTRIBUTE);
-        if (retry != null) {
-            Allure.addAttachment("Retry metadata", "retryAttempt=" + retry);
+        Object reason = result.getAttribute(FrameworkRetryAnalyzer.RETRY_REASON_ATTRIBUTE);
+        if (retry != null || reason != null) {
+            Allure.addAttachment("Retry metadata",
+                "retryAttempt=" + retry + ", retryReason=" + reason);
         }
     }
 
@@ -75,11 +58,10 @@ public final class AllureTestNgListener implements ITestListener {
 
         Allure.label("testId", context.testId());
         Allure.label("correlationId", context.correlationId());
+        Allure.label("startedAt", context.startedAt().toString());
 
         for (Map.Entry<String, String> tag : context.environmentTags().entrySet()) {
-            Allure.getLifecycle().updateTestCase(testResult ->
-                testResult.getLabels().add(new Label().setName(tag.getKey()).setValue(tag.getValue()))
-            );
+            Allure.label(tag.getKey(), tag.getValue());
         }
     }
 

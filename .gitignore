@@ -11,3 +11,5 @@
 .idea/
 CLAUDE.md
 allure-open.sh
+ARCHITECTURE.md
+AllureTestNgListener-refs.md

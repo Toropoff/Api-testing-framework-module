@@ -25,17 +25,10 @@ val previousAllureHistoryDir = layout.buildDirectory.dir("reports/allure-report/
 val allureEnvDir = layout.projectDirectory.dir("framework-reporting/allure-results")
 
 val suiteAllureResultDirs = listOf(
-    layout.projectDirectory.dir("test-suites/tests-smoke/allure-results"),
-    layout.projectDirectory.dir("test-suites/tests-regression/allure-results"),
-    layout.projectDirectory.dir("test-suites/tests-integration/allure-results"),
-    layout.projectDirectory.dir("test-suites/tests-public-api/allure-results"),
-    // Backward compatibility for older local runs that still write into build/allure-results.
     layout.projectDirectory.dir("test-suites/tests-smoke/build/allure-results"),
     layout.projectDirectory.dir("test-suites/tests-regression/build/allure-results"),
     layout.projectDirectory.dir("test-suites/tests-integration/build/allure-results"),
-    layout.projectDirectory.dir("test-suites/tests-public-api/build/allure-results"),
-    // Single environment.properties written by AllureEnvironmentWriter for all suites.
-    allureEnvDir
+    layout.projectDirectory.dir("test-suites/tests-public-api/build/allure-results")
 )
 
 val allureSuiteTaskPaths = listOf(
@@ -62,6 +55,12 @@ tasks.register("collectAllureResults") {
             into(outputDir)
             includeEmptyDirs = false
             duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        }
+
+        // environment.properties only — allureEnvDir must not contribute test result files
+        copy {
+            from(allureEnvDir) { include("environment.properties") }
+            into(outputDir)
         }
 
         if (previousHistoryDir.exists()) {
@@ -155,8 +154,15 @@ subprojects {
 
         systemProperty("allure.env.dir", allureEnvDir.asFile.absolutePath)
 
+        val allureResultsDir = project.layout.buildDirectory.dir("allure-results")
+        systemProperty("allure.results.directory", allureResultsDir.get().asFile.absolutePath)
+
         if (forceAllureSuiteRun && path in allureSuiteTestTasks) {
             outputs.upToDateWhen { false }
+        }
+
+        doFirst {
+            delete(allureResultsDir)
         }
     }
 }
