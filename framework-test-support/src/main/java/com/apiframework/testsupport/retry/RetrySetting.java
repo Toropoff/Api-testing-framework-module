@@ -9,12 +9,5 @@ import java.lang.annotation.Target;
 @Target({ElementType.TYPE, ElementType.METHOD})
 public @interface RetrySetting {
     int maxRetries() default -1;
-
-    /**
-     * @deprecated Use maxRetries. Preserved for compatibility.
-     */
-    @Deprecated
-    int maxAttempts() default -1;
-
     long delayMs() default -1;
 }

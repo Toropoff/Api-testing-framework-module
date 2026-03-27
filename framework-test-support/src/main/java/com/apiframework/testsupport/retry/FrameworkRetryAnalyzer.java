@@ -63,9 +63,7 @@ public final class FrameworkRetryAnalyzer implements IRetryAnalyzer {
 
     // Inlined from RetryConfiguration.globalPolicy()
     private RetryRuntimePolicy resolvePolicy(ITestResult result) {
-        int maxRetries = Integer.parseInt(
-            System.getProperty("test.retry.maxRetries", System.getProperty("test.retry.maxAttempts", "1"))
-        );
+        int maxRetries = Integer.parseInt(System.getProperty("test.retry.maxRetries", "1"));
         long delayMs = Long.parseLong(System.getProperty("test.retry.delayMs", "0"));
         RetryRuntimePolicy global = new RetryRuntimePolicy(maxRetries, delayMs);
 
@@ -81,13 +79,8 @@ public final class FrameworkRetryAnalyzer implements IRetryAnalyzer {
         return global;
     }
 
-    @SuppressWarnings("deprecation")
     private RetryRuntimePolicy merge(RetryRuntimePolicy global, RetrySetting override) {
-        int configuredMaxRetries = override.maxRetries() >= 0 ? override.maxRetries() : -1;
-        if (configuredMaxRetries < 0 && override.maxAttempts() > 0) {
-            configuredMaxRetries = override.maxAttempts() - 1;
-        }
-        int maxRetries = configuredMaxRetries >= 0 ? configuredMaxRetries : global.maxRetries();
+        int maxRetries = override.maxRetries() >= 0 ? override.maxRetries() : global.maxRetries();
         long delay = override.delayMs() >= 0 ? override.delayMs() : global.baseDelayMs();
         return new RetryRuntimePolicy(maxRetries, delay);
     }
