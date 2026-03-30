@@ -52,12 +52,14 @@ public final class AllureTestNgListener implements ITestListener, ISuiteListener
         }
     }
 
-    // Writes environment.properties to the Allure results directory after the suite finishes — populates the Allure Environment widget.
+    // Writes environment.properties and (for local runs) executor.json to the Allure results directory
+    // after the suite finishes — populates the Allure Environment and Executors widgets.
     @Override
     public void onFinish(ISuite suite) {
+        // outputDir hoisted — shared by both write blocks; each has its own silent catch
+        String outputDir = System.getProperty("allure.env.dir", "allure-results");
         try {
             String env = ConfigResolver.resolveFromSystem().env();
-            String outputDir = System.getProperty("allure.env.dir", "allure-results");
             Properties props = new Properties();
             props.setProperty("Environment", env);
             Files.createDirectories(Paths.get(outputDir));
@@ -66,6 +68,15 @@ public final class AllureTestNgListener implements ITestListener, ISuiteListener
             }
         } catch (Exception e) {
             // silent — environment.properties is non-critical
+        }
+        if (System.getenv("CI") == null) {
+            try {
+                Files.createDirectories(Paths.get(outputDir));
+                Files.writeString(Paths.get(outputDir, "executor.json"),
+                    "{\"name\":\"Local\",\"type\":\"manual\",\"buildName\":\"Local run\"}");
+            } catch (Exception e) {
+                // silent — executor.json is non-critical
+            }
         }
     }
 
