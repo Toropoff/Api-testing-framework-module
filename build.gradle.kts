@@ -88,6 +88,17 @@ tasks.register("runSuitesForAllure") {
     dependsOn(allureSuiteTaskPaths)
 }
 
+// Ensures categories.json is available to allureServe's own aggregation pipeline (allureEnvDir is included by the plugin).
+tasks.named("allureServe") {
+    doFirst {
+        copy {
+            from("framework-reporting/src/main/resources/allure") { include("categories.json") }
+            into(allureEnvDir)
+            duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        }
+    }
+}
+
 tasks.named("allureReport") {
     dependsOn("collectAllureResults")
     mustRunAfter("runSuitesForAllure")
