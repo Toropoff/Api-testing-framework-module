@@ -57,10 +57,18 @@ tasks.register("collectAllureResults") {
             duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         }
 
-        // environment.properties only — allureEnvDir must not contribute test result files
+        // static allure config — committed resource, source: framework-reporting/src/main/resources/allure/
         copy {
-            from(allureEnvDir) { include("environment.properties") }
+            from("framework-reporting/src/main/resources/allure") { include("categories.json") }
             into(outputDir)
+            duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        }
+
+        // runtime-generated allure metadata — environment + executor (non-critical, may not exist on first run)
+        copy {
+            from(allureEnvDir) { include("environment.properties", "executor.json") }
+            into(outputDir)
+            duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         }
 
         if (previousHistoryDir.exists()) {
