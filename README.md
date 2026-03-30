@@ -9,7 +9,7 @@ Multi-module API test framework on Java 21 + Gradle + TestNG + REST Assured with
 
 ## Modules
 
-- `framework-core` — HTTP client (REST Assured), auth (Basic Auth), config, filters, retry policy.
+- `framework-core` — HTTP client (REST Assured), auth (Basic Auth), config, filters.
 - `framework-test-support` — base test classes, retry analyzer, listeners, `NetworkAwareMethodListener`.
 - `framework-reporting` — Allure TestNG listener + native `AllureRestAssured` filter for HTTP step logging (request/response attachments, cURL preview).
 - `framework-db-oracle` — Oracle datasource + jOOQ repositories + await helpers.
