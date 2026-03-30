@@ -5,7 +5,6 @@ import com.apiframework.config.ConfigResolver;
 import com.apiframework.config.FrameworkRuntimeConfig;
 import com.apiframework.http.CorrelationIdFilter;
 import com.apiframework.http.HttpClient;
-import com.apiframework.testsupport.allure.AllureEnvironmentWriter;
 import com.apiframework.testsupport.network.NetworkAwareMethodListener;
 import io.qameta.allure.Allure;
 import org.testng.ITestResult;
@@ -20,7 +19,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
 
-@Listeners({NetworkAwareMethodListener.class, AllureEnvironmentWriter.class})
+@Listeners({NetworkAwareMethodListener.class})
 public abstract class BaseApiTest {
     public static final String TEST_CONTEXT_ATTRIBUTE = "framework.test.context";
 
@@ -28,12 +27,15 @@ public abstract class BaseApiTest {
     protected HttpClient httpClient;
     protected TestExecutionContext testContext;
 
+    // Runs once per test class. Resolves runtime config and builds the HttpClient for this domain.
     @BeforeClass(alwaysRun = true)
     public void initHttpClient() {
         this.runtimeConfig = ConfigResolver.resolveFromSystem();
         this.httpClient = ApiClientFactory.create(basePath(), runtimeConfig);
     }
 
+    // Runs before each @Test. Creates a fresh TestExecutionContext (unique correlationId, testId, timestamps),
+    // sets it on ITestResult for listeners, activates the correlationId on the HTTP filter, and labels the Allure parentSuite.
     @BeforeMethod(alwaysRun = true)
     public void beforeEach(ITestResult result) {
         this.testContext = new TestExecutionContext(
@@ -48,6 +50,7 @@ public abstract class BaseApiTest {
         Allure.label("parentSuite", targetApi());
     }
 
+    // Runs after each @Test. Clears the correlationId from the ThreadLocal to prevent leak to the next test.
     @AfterMethod(alwaysRun = true)
     public void afterEach() {
         CorrelationIdFilter.clear();

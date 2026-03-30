@@ -2,7 +2,6 @@
 <suite name="Integration Suite" verbose="1">
     <listeners>
         <listener class-name="com.apiframework.testsupport.retry.RetryAnnotationTransformer"/>
-        <listener class-name="com.apiframework.testsupport.retry.RetryReportingListener"/>
         <listener class-name="com.apiframework.reporting.allure.AllureTestNgListener"/>
     </listeners>
     <test name="Integration API Tests">

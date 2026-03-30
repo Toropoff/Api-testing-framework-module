@@ -2,7 +2,6 @@
 <suite name="Smoke Suite" verbose="1">
     <listeners>
         <listener class-name="com.apiframework.testsupport.retry.RetryAnnotationTransformer"/>
-        <listener class-name="com.apiframework.testsupport.retry.RetryReportingListener"/>
         <listener class-name="com.apiframework.reporting.allure.AllureTestNgListener"/>
     </listeners>
     <test name="Smoke API Tests">
