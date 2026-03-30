@@ -6,8 +6,8 @@ import java.util.Objects;
 import java.util.Properties;
 
 /**
- * Utility for loading domain-level configuration from classpath property files.
- * Eliminates the repeated static initializer pattern across domain Api classes.
+ *a lightweight, centralized utility for loading domain-specific basePath
+ *from environment-aware property files with fallback and validation
  */
 public final class DomainConfig {
 
