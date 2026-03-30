@@ -8,11 +8,8 @@ import com.apiframework.testsupport.allure.AllureEnvironmentWriter;
 import com.apiframework.testsupport.network.NetworkAwareMethodListener;
 import io.qameta.allure.Allure;
 import org.testng.ITestResult;
-import org.testng.Reporter;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Listeners;
 
 import java.time.Instant;
@@ -29,17 +26,9 @@ public abstract class BaseApiTest {
     protected HttpClient httpClient;
     protected TestExecutionContext testContext;
 
-    @BeforeSuite(alwaysRun = true)
-    public void initRuntimeConfig() {
-        this.runtimeConfig = ConfigResolver.resolveFromSystem();
-    }
-
     @BeforeClass(alwaysRun = true)
     public void initHttpClient() {
-        if (runtimeConfig == null) {
-            initRuntimeConfig();
-        }
-
+        this.runtimeConfig = ConfigResolver.resolveFromSystem();
         this.httpClient = ApiClientFactory.create(basePath(), runtimeConfig);
     }
 
@@ -53,14 +42,7 @@ public abstract class BaseApiTest {
         );
 
         result.setAttribute(TEST_CONTEXT_ATTRIBUTE, testContext);
-        result.setAttribute("X-Correlation-Id", testContext.correlationId());
-        Reporter.log("[framework] testContext=" + testContext, true);
         Allure.label("parentSuite", targetApi());
-    }
-
-    @AfterMethod(alwaysRun = true)
-    public void afterEach(ITestResult result) {
-        Reporter.log("[framework] completed=" + testContext.testId() + " status=" + result.getStatus(), true);
     }
 
     protected abstract String basePath();
