@@ -1,14 +1,13 @@
 package com.apiframework.client;
 
 import com.apiframework.config.FrameworkRuntimeConfig;
+import com.apiframework.http.CorrelationIdFilter;
 import com.apiframework.http.HttpClient;
 import com.apiframework.http.RestAssuredHttpClient;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.config.HttpClientConfig;
 import io.restassured.config.RestAssuredConfig;
 import io.restassured.http.ContentType;
-
-import java.util.UUID;
 
 import static io.restassured.RestAssured.preemptive;
 
@@ -34,7 +33,7 @@ public final class ApiClientFactory {
             .setBaseUri(baseUrl)
             .setContentType(ContentType.JSON)
             .setConfig(restAssuredConfig)
-            .addHeader("X-Correlation-Id", UUID.randomUUID().toString());
+            .addFilter(new CorrelationIdFilter());
 
         String clientName = System.getenv("FRAMEWORK_CLIENT_NAME");
         String clientSecret = System.getenv("FRAMEWORK_CLIENT_SECRET");

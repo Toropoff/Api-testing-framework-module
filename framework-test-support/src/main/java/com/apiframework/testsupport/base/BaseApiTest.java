@@ -3,11 +3,13 @@ package com.apiframework.testsupport.base;
 import com.apiframework.client.ApiClientFactory;
 import com.apiframework.config.ConfigResolver;
 import com.apiframework.config.FrameworkRuntimeConfig;
+import com.apiframework.http.CorrelationIdFilter;
 import com.apiframework.http.HttpClient;
 import com.apiframework.testsupport.allure.AllureEnvironmentWriter;
 import com.apiframework.testsupport.network.NetworkAwareMethodListener;
 import io.qameta.allure.Allure;
 import org.testng.ITestResult;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
@@ -42,7 +44,13 @@ public abstract class BaseApiTest {
         );
 
         result.setAttribute(TEST_CONTEXT_ATTRIBUTE, testContext);
+        CorrelationIdFilter.set(testContext.correlationId());
         Allure.label("parentSuite", targetApi());
+    }
+
+    @AfterMethod(alwaysRun = true)
+    public void afterEach() {
+        CorrelationIdFilter.clear();
     }
 
     protected abstract String basePath();
