@@ -88,13 +88,27 @@ tasks.register("runSuitesForAllure") {
     dependsOn(allureSuiteTaskPaths)
 }
 
-// Ensures categories.json is available to allureServe's own aggregation pipeline (allureEnvDir is included by the plugin).
+// allureServe has its own aggregation pipeline that reads from each subproject's build/allure-results/
+// and from allureEnvDir — it does NOT use the root build/allure-results/ populated by collectAllureResults.
+// Both copies below inject into allureEnvDir so the serve pipeline picks them up, matching what allureReport sees.
 tasks.named("allureServe") {
     doFirst {
+        // Static defect category config — committed resource, must be present for the Categories widget.
         copy {
             from("framework-reporting/src/main/resources/allure") { include("categories.json") }
             into(allureEnvDir)
             duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        }
+        // History from the last allureReport run — makes the Trend/History widgets consistent between
+        // allureServe and allureReport. allureServe generates to a temp dir so it cannot update history;
+        // history is only written by allureReport (via collectAllureResults → allureReport output).
+        val historyDir = previousAllureHistoryDir.get().asFile
+        if (historyDir.exists()) {
+            copy {
+                from(historyDir)
+                into(allureEnvDir.dir("history"))
+                duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+            }
         }
     }
 }
