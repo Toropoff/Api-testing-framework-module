@@ -1,7 +1,11 @@
 package com.apiframework.domains.openholidays.endpoint;
 
 enum OpenHolidaysRoute {
-    SUBDIVISIONS("/Subdivisions");
+    SUBDIVISIONS("/Subdivisions"),
+    SCHOOL_HOLIDAYS_BY_DATE("/SchoolHolidaysByDate"),
+    PUBLIC_HOLIDAYS_BY_DATE("/PublicHolidaysByDate"),
+    STATISTICS_SCHOOL_HOLIDAYS("/Statistics/SchoolHolidays"),
+    STATISTICS_PUBLIC_HOLIDAYS("/Statistics/PublicHolidays");
 
     private final String path;
 

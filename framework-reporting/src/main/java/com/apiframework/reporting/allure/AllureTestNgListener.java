@@ -1,8 +1,6 @@
 package com.apiframework.reporting.allure;
 
 import com.apiframework.config.ConfigResolver;
-import com.apiframework.testsupport.base.BaseApiTest;
-import com.apiframework.testsupport.base.TestExecutionContext;
 import com.apiframework.testsupport.retry.FrameworkRetryAnalyzer;
 import io.qameta.allure.Allure;
 import io.qameta.allure.restassured.AllureRestAssured;
@@ -18,14 +16,9 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Map;
 import java.util.Properties;
 
 /**
- * Test lifecycle reporting listener for Allure.
- * <p>
- * Responsible for test-level labels, retry metadata and failure stacktrace.
- * <p>
  * Not responsible for per-request HTTP step creation or request/response attachments
  * (these belong to the HTTP reporting filter layer).
  */
@@ -35,12 +28,6 @@ public final class AllureTestNgListener implements ITestListener, ISuiteListener
     @Override
     public void onStart(ITestContext context) {
         RestAssured.filters(new AllureRestAssured());
-    }
-
-    // Attaches TestExecutionContext labels (testId, correlationId, startedAt, env tags) to the Allure test case on test start.
-    @Override
-    public void onTestStart(ITestResult result) {
-        attachContextLabels(result);
     }
 
     // On test failure: attaches retry metadata (attempt count + reason) and full stacktrace as Allure attachments.
@@ -86,21 +73,6 @@ public final class AllureTestNgListener implements ITestListener, ISuiteListener
         if (retry != null || reason != null) {
             Allure.addAttachment("Retry metadata",
                 "retryAttempt=" + retry + ", retryReason=" + reason);
-        }
-    }
-
-    private void attachContextLabels(ITestResult result) {
-        Object contextAttribute = result.getAttribute(BaseApiTest.TEST_CONTEXT_ATTRIBUTE);
-        if (!(contextAttribute instanceof TestExecutionContext context)) {
-            return;
-        }
-
-        Allure.label("testId", context.testId());
-        Allure.label("correlationId", context.correlationId());
-        Allure.label("startedAt", context.startedAt().toString());
-
-        for (Map.Entry<String, String> tag : context.environmentTags().entrySet()) {
-            Allure.label(tag.getKey(), tag.getValue());
         }
     }
 

@@ -13,16 +13,11 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
 
-import java.time.Instant;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
 
 @Listeners({NetworkAwareMethodListener.class})
 public abstract class BaseApiTest {
-    public static final String TEST_CONTEXT_ATTRIBUTE = "framework.test.context";
-
     protected FrameworkRuntimeConfig runtimeConfig;
     protected HttpClient httpClient;
     protected TestExecutionContext testContext;
@@ -34,18 +29,11 @@ public abstract class BaseApiTest {
         this.httpClient = ApiClientFactory.create(basePath(), runtimeConfig);
     }
 
-    // Runs before each @Test. Creates a fresh TestExecutionContext (unique correlationId, testId, timestamps),
-    // sets it on ITestResult for listeners, activates the correlationId on the HTTP filter, and labels the Allure parentSuite.
+    // Runs before each @Test. Creates a fresh correlationId, activates it on the HTTP filter, and labels the Allure parentSuite.
     @BeforeMethod(alwaysRun = true)
     public void beforeEach(ITestResult result) {
-        this.testContext = new TestExecutionContext(
-            result.getTestClass().getName() + "." + result.getMethod().getMethodName(),
-            UUID.randomUUID().toString(),
-            Instant.now(),
-            environmentTags()
-        );
+        this.testContext = new TestExecutionContext(UUID.randomUUID().toString());
 
-        result.setAttribute(TEST_CONTEXT_ATTRIBUTE, testContext);
         CorrelationIdFilter.set(testContext.correlationId());
         Allure.label("parentSuite", targetApi());
     }
@@ -70,13 +58,5 @@ public abstract class BaseApiTest {
             initHttpClient();
         }
         return httpClient;
-    }
-
-    protected Map<String, String> environmentTags() {
-        Map<String, String> tags = new LinkedHashMap<>();
-        tags.put("profile", runtimeConfig.profile());
-        tags.put("env", runtimeConfig.env());
-        tags.put("baseUrl", basePath());
-        return tags;
     }
 }
