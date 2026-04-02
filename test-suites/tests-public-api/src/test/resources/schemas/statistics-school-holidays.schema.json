@@ -4,6 +4,6 @@
   "required": ["oldestStartDate", "youngestStartDate"],
   "properties": {
     "oldestStartDate":   { "type": "string" },
-    "youngestStartDate": { "type": "string" }
+    "youngestStartDate": { "type": "int" }
   }
 }
