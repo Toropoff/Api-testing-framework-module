@@ -7,6 +7,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import io.restassured.specification.RequestSpecification;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -17,6 +19,8 @@ import java.util.Objects;
  * REST Assured is a non-replaceable foundation of this framework.
  */
 public final class RestAssuredHttpClient implements HttpClient {
+
+    private static final Logger log = LoggerFactory.getLogger(RestAssuredHttpClient.class);
 
     private final RequestSpecification baseSpec;
     private final ObjectMapper objectMapper;
@@ -98,7 +102,22 @@ public final class RestAssuredHttpClient implements HttpClient {
         };
 
         String rawBody = response.getBody() == null ? "" : response.getBody().asString();
-        return toApiResponse(response, rawBody, responseType);
+        ApiResponse<T> apiResponse = toApiResponse(response, rawBody, responseType);
+
+        log.info("{} {} → {} ({}ms) [correlationId={}]",
+            method, path, apiResponse.statusCode(), apiResponse.durationMs(), apiResponse.correlationId());
+
+        if (log.isDebugEnabled()) {
+            if (queryParams != null && !queryParams.isEmpty()) {
+                log.debug("  query params: {}", queryParams);
+            }
+            if (body != null) {
+                log.debug("  request body: {}", body);
+            }
+            log.debug("  response body: {}", rawBody);
+        }
+
+        return apiResponse;
     }
 
     private <T> ApiResponse<T> toApiResponse(Response response, String rawBody, Class<T> responseType) {
