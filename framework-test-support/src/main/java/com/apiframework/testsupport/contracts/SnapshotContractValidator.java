@@ -1,5 +1,7 @@
 package com.apiframework.testsupport.contracts;
 
+import io.qameta.allure.Allure;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -28,18 +30,20 @@ public final class SnapshotContractValidator {
     }
 
     public void assertMatchesSnapshot(String snapshotName, String actualJson) {
-        String resourcePath = classpathRoot + snapshotName + ".json";
-        try (InputStream stream = Thread.currentThread().getContextClassLoader()
-                .getResourceAsStream(resourcePath)) {
-            if (stream == null) {
-                throw new AssertionError("Snapshot not found on classpath: " + resourcePath);
+        Allure.step("Snapshot: " + snapshotName, () -> {
+            String resourcePath = classpathRoot + snapshotName + ".json";
+            try (InputStream stream = Thread.currentThread().getContextClassLoader()
+                    .getResourceAsStream(resourcePath)) {
+                if (stream == null) {
+                    throw new AssertionError("Snapshot not found on classpath: " + resourcePath);
+                }
+                String expectedJson = new String(stream.readAllBytes(), StandardCharsets.UTF_8);
+                assertThatJson(actualJson).isEqualTo(expectedJson);
+            } catch (AssertionError assertionError) {
+                throw assertionError;
+            } catch (IOException ioException) {
+                throw new IllegalStateException("Unable to read snapshot file: " + resourcePath, ioException);
             }
-            String expectedJson = new String(stream.readAllBytes(), StandardCharsets.UTF_8);
-            assertThatJson(actualJson).isEqualTo(expectedJson);
-        } catch (AssertionError assertionError) {
-            throw assertionError;
-        } catch (IOException ioException) {
-            throw new IllegalStateException("Unable to read snapshot file: " + resourcePath, ioException);
-        }
+        });
     }
 }
