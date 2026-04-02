@@ -163,6 +163,12 @@ subprojects {
 
     tasks.withType<Test>().configureEach {
         useTestNG()
+        doFirst {
+            val weaver = configurations.findByName("testRuntimeClasspath")
+                ?.files
+                ?.find { it.name.contains("aspectjweaver") }
+            if (weaver != null) jvmArgs("-javaagent:${weaver.absolutePath}")
+        }
         testLogging {
             events = setOf(TestLogEvent.PASSED, TestLogEvent.FAILED, TestLogEvent.SKIPPED)
             exceptionFormat = TestExceptionFormat.FULL
