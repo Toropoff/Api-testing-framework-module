@@ -3,7 +3,6 @@ package com.apiframework.reporting.allure;
 import com.apiframework.config.ConfigResolver;
 import com.apiframework.testsupport.retry.FrameworkRetryAnalyzer;
 import io.qameta.allure.Allure;
-import io.qameta.allure.restassured.AllureRestAssured;
 import io.restassured.RestAssured;
 import org.testng.ITestContext;
 import org.testng.ITestListener;
@@ -18,32 +17,48 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Properties;
 
-/**
- * Not responsible for per-request HTTP step creation or request/response attachments
- * (these belong to the HTTP reporting filter layer).
- */
 public final class AllureTestNgListener implements ITestListener, ISuiteListener {
 
-    // Registers AllureRestAssured filter globally for REST Assured — captures HTTP request/response as Allure steps for every test in the suite.
+    private static volatile boolean filtersRegistered;
+
     @Override
     public void onStart(ITestContext context) {
-        RestAssured.filters(new AllureRestAssured());
+        if (!filtersRegistered) {
+            TestLogAppender.install();
+            RestAssured.filters(new AllureHttpFilter());
+            filtersRegistered = true;
+        }
     }
 
-    // On test failure: attaches retry metadata (attempt count + reason) and full stacktrace as Allure attachments.
+    @Override
+    public void onTestStart(ITestResult result) {
+        TestLogAppender.startCapture();
+    }
+
+    @Override
+    public void onTestSuccess(ITestResult result) {
+        attachTestLog();
+    }
+
     @Override
     public void onTestFailure(ITestResult result) {
+        attachTestLog();
         attachRetryMetadata(result);
         if (result.getThrowable() != null) {
-            Allure.addAttachment("Failure stacktrace", "text/plain", stackTraceOf(result.getThrowable()), ".txt");
+            Allure.addAttachment("Failure stacktrace", "text/plain",
+                stackTraceOf(result.getThrowable()), ".txt");
         }
+    }
+
+    @Override
+    public void onTestSkipped(ITestResult result) {
+        TestLogAppender.stopAndDrain();
     }
 
     // Writes environment.properties and (for local runs) executor.json to the Allure results directory
     // after the suite finishes — populates the Allure Environment and Executors widgets.
     @Override
     public void onFinish(ISuite suite) {
-        // outputDir hoisted — shared by both write blocks; each has its own silent catch
         String outputDir = System.getProperty("allure.env.dir", "allure-results");
         try {
             String env = ConfigResolver.resolveFromSystem().env();
@@ -64,6 +79,13 @@ public final class AllureTestNgListener implements ITestListener, ISuiteListener
             } catch (Exception e) {
                 // silent — executor.json is non-critical
             }
+        }
+    }
+
+    private void attachTestLog() {
+        String logs = TestLogAppender.stopAndDrain();
+        if (!logs.isBlank()) {
+            Allure.addAttachment("Test execution log", "text/plain", logs, ".log");
         }
     }
 
