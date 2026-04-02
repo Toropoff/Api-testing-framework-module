@@ -2,7 +2,6 @@ package com.apiframework.tests.smoke;
 
 import com.apiframework.domains.postmanecho.endpoint.PostmanEchoApi;
 import com.apiframework.testsupport.base.BaseApiTest;
-import io.qameta.allure.Allure;
 import io.qameta.allure.Description;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -26,9 +25,7 @@ public class PostmanEchoSmokeTest extends BaseApiTest {
     public void shouldEchoQueryParameter() {
         var response = echoApi.getEcho("suite", "smoke");
 
-        Allure.step("Validate status 200 and echoed query parameter value", () -> {
-            assertThat(response.statusCode()).isEqualTo(200);
-            assertThat(response.body().args()).containsEntry("suite", "smoke");
-        });
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.body().args()).containsEntry("suite", "smoke");
     }
 }

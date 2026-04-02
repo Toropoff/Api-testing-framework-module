@@ -6,7 +6,6 @@ import com.apiframework.domains.openholidays.model.SubdivisionResponse;
 import com.apiframework.testsupport.base.BaseApiTest;
 import com.apiframework.testsupport.contracts.JsonSchemaContractValidator;
 import com.apiframework.testsupport.contracts.SnapshotContractValidator;
-import io.qameta.allure.Allure;
 import io.qameta.allure.Description;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -37,15 +36,13 @@ public class OpenHolidaysPublicApiTest extends BaseApiTest {
     public void shouldReturnSubdivisionsForValidCountry() {
         var response = openHolidaysApi.getSubdivisions("DE", "EN");
 
-        Allure.step("Validate status 200 and non-empty subdivisions list with valid fields", () -> {
-            assertThat(response.statusCode()).isEqualTo(200);
-            assertThat(response.body()).isNotNull().isNotEmpty();
-            SubdivisionResponse first = response.body()[0];
-            assertThat(first.isoCode()).isNotBlank();
-            assertThat(first.shortName()).isNotBlank();
-            assertThat(first.name()).isNotEmpty();
-            assertThat(first.officialLanguages()).isNotEmpty();
-        });
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.body()).isNotNull().isNotEmpty();
+        SubdivisionResponse first = response.body()[0];
+        assertThat(first.isoCode()).isNotBlank();
+        assertThat(first.shortName()).isNotBlank();
+        assertThat(first.name()).isNotEmpty();
+        assertThat(first.officialLanguages()).isNotEmpty();
     }
 
     @Description("Verifies that GET /Subdivisions without a countryIsoCode query parameter returns 400 Bad Request")
@@ -53,9 +50,7 @@ public class OpenHolidaysPublicApiTest extends BaseApiTest {
     public void shouldReturn400WhenCountryIsoCodeIsMissing() {
         var response = openHolidaysApi.getSubdivisionsRaw();
 
-        Allure.step("Validate 400 Bad Request response status", () ->
-            assertThat(response.statusCode()).isEqualTo(400)
-        );
+        assertThat(response.statusCode()).isEqualTo(400);
     }
 
     @Description("Verifies that GET /SchoolHolidaysByDate returns 200 with a non-empty array of school holidays for a known date, conforming to schema and matching golden-file snapshot")
@@ -63,20 +58,14 @@ public class OpenHolidaysPublicApiTest extends BaseApiTest {
     public void shouldReturnSchoolHolidaysByDate() {
         var response = openHolidaysApi.getSchoolHolidaysByDate(TEST_DATE, TEST_LANGUAGE);
 
-        Allure.step("Validate status 200 and non-empty response array", () -> {
-            assertThat(response.statusCode()).isEqualTo(200);
-            assertThat(response.body()).isNotNull().isNotEmpty();
-            HolidayByDateResponse first = response.body()[0];
-            assertThat(first.type()).isEqualTo("School");
-            assertThat(first.country()).isNotNull();
-            assertThat(first.country().isoCode()).isNotBlank();
-        });
-        Allure.step("Validate response conforms to JSON schema", () ->
-            schemaValidator.assertMatchesSchema(response.rawBody(), "schemas/school-holidays-by-date.schema.json")
-        );
-        Allure.step("Validate response matches golden-file snapshot", () ->
-            snapshotValidator.assertMatchesSnapshot("school-holidays-by-date", response.rawBody())
-        );
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.body()).isNotNull().isNotEmpty();
+        HolidayByDateResponse first = response.body()[0];
+        assertThat(first.type()).isEqualTo("School");
+        assertThat(first.country()).isNotNull();
+        assertThat(first.country().isoCode()).isNotBlank();
+        schemaValidator.assertMatchesSchema(response.rawBody(), "schemas/school-holidays-by-date.schema.json");
+        snapshotValidator.assertMatchesSnapshot("school-holidays-by-date", response.rawBody());
     }
 
     @Description("Verifies that GET /SchoolHolidaysByDate without the required date parameter returns 400 Bad Request")
@@ -84,9 +73,7 @@ public class OpenHolidaysPublicApiTest extends BaseApiTest {
     public void shouldReturn400WhenDateMissingForSchoolHolidaysByDate() {
         var response = openHolidaysApi.getSchoolHolidaysByDateRaw();
 
-        Allure.step("Validate 400 Bad Request response status", () ->
-            assertThat(response.statusCode()).isEqualTo(400)
-        );
+        assertThat(response.statusCode()).isEqualTo(400);
     }
 
     @Description("Verifies that GET /PublicHolidaysByDate returns 200 with a non-empty array of public holidays for a known date, conforming to schema and matching golden-file snapshot")
@@ -94,20 +81,14 @@ public class OpenHolidaysPublicApiTest extends BaseApiTest {
     public void shouldReturnPublicHolidaysByDate() {
         var response = openHolidaysApi.getPublicHolidaysByDate(TEST_DATE, TEST_LANGUAGE);
 
-        Allure.step("Validate status 200 and non-empty response array", () -> {
-            assertThat(response.statusCode()).isEqualTo(200);
-            assertThat(response.body()).isNotNull().isNotEmpty();
-            HolidayByDateResponse first = response.body()[0];
-            assertThat(first.type()).isEqualTo("Public");
-            assertThat(first.country()).isNotNull();
-            assertThat(first.country().isoCode()).isNotBlank();
-        });
-        Allure.step("Validate response conforms to JSON schema", () ->
-            schemaValidator.assertMatchesSchema(response.rawBody(), "schemas/public-holidays-by-date.schema.json")
-        );
-        Allure.step("Validate response matches golden-file snapshot", () ->
-            snapshotValidator.assertMatchesSnapshot("public-holidays-by-date", response.rawBody())
-        );
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.body()).isNotNull().isNotEmpty();
+        HolidayByDateResponse first = response.body()[0];
+        assertThat(first.type()).isEqualTo("Public");
+        assertThat(first.country()).isNotNull();
+        assertThat(first.country().isoCode()).isNotBlank();
+        schemaValidator.assertMatchesSchema(response.rawBody(), "schemas/public-holidays-by-date.schema.json");
+        snapshotValidator.assertMatchesSnapshot("public-holidays-by-date", response.rawBody());
     }
 
     @Description("Verifies that GET /PublicHolidaysByDate without the required date parameter returns 400 Bad Request")
@@ -115,9 +96,7 @@ public class OpenHolidaysPublicApiTest extends BaseApiTest {
     public void shouldReturn400WhenDateMissingForPublicHolidaysByDate() {
         var response = openHolidaysApi.getPublicHolidaysByDateRaw();
 
-        Allure.step("Validate 400 Bad Request response status", () ->
-            assertThat(response.statusCode()).isEqualTo(400)
-        );
+        assertThat(response.statusCode()).isEqualTo(400);
     }
 
     @Description("Verifies that GET /Statistics/SchoolHolidays returns 200 with oldestStartDate and youngestStartDate for a known country, conforming to schema and matching golden-file snapshot")
@@ -125,18 +104,12 @@ public class OpenHolidaysPublicApiTest extends BaseApiTest {
     public void shouldReturnStatisticsForSchoolHolidays() {
         var response = openHolidaysApi.getStatisticsSchoolHolidays(TEST_COUNTRY);
 
-        Allure.step("Validate status 200 and statistics object with date fields", () -> {
-            assertThat(response.statusCode()).isEqualTo(200);
-            assertThat(response.body()).isNotNull();
-            assertThat(response.body().oldestStartDate()).isNotBlank();
-            assertThat(response.body().youngestStartDate()).isNotBlank();
-        });
-        Allure.step("Validate response conforms to JSON schema", () ->
-            schemaValidator.assertMatchesSchema(response.rawBody(), "schemas/statistics-school-holidays.schema.json")
-        );
-        Allure.step("Validate response matches golden-file snapshot", () ->
-            snapshotValidator.assertMatchesSnapshot("statistics-school-holidays", response.rawBody())
-        );
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.body()).isNotNull();
+        assertThat(response.body().oldestStartDate()).isNotBlank();
+        assertThat(response.body().youngestStartDate()).isNotBlank();
+        schemaValidator.assertMatchesSchema(response.rawBody(), "schemas/statistics-school-holidays.schema.json");
+        snapshotValidator.assertMatchesSnapshot("statistics-school-holidays", response.rawBody());
     }
 
     @Description("Verifies that GET /Statistics/SchoolHolidays without the required countryIsoCode parameter returns 400 Bad Request")
@@ -144,9 +117,7 @@ public class OpenHolidaysPublicApiTest extends BaseApiTest {
     public void shouldReturn400WhenCountryMissingForSchoolHolidaysStatistics() {
         var response = openHolidaysApi.getStatisticsSchoolHolidaysRaw();
 
-        Allure.step("Validate 400 Bad Request response status", () ->
-            assertThat(response.statusCode()).isEqualTo(400)
-        );
+        assertThat(response.statusCode()).isEqualTo(400);
     }
 
     @Description("Verifies that GET /Statistics/PublicHolidays returns 200 with oldestStartDate and youngestStartDate for a known country, conforming to schema and matching golden-file snapshot")
@@ -154,18 +125,12 @@ public class OpenHolidaysPublicApiTest extends BaseApiTest {
     public void shouldReturnStatisticsForPublicHolidays() {
         var response = openHolidaysApi.getStatisticsPublicHolidays(TEST_COUNTRY);
 
-        Allure.step("Validate status 200 and statistics object with date fields", () -> {
-            assertThat(response.statusCode()).isEqualTo(200);
-            assertThat(response.body()).isNotNull();
-            assertThat(response.body().oldestStartDate()).isNotBlank();
-            assertThat(response.body().youngestStartDate()).isNotBlank();
-        });
-        Allure.step("Validate response conforms to JSON schema", () ->
-            schemaValidator.assertMatchesSchema(response.rawBody(), "schemas/statistics-public-holidays.schema.json")
-        );
-        Allure.step("Validate response matches golden-file snapshot", () ->
-            snapshotValidator.assertMatchesSnapshot("statistics-public-holidays", response.rawBody())
-        );
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.body()).isNotNull();
+        assertThat(response.body().oldestStartDate()).isNotBlank();
+        assertThat(response.body().youngestStartDate()).isNotBlank();
+        schemaValidator.assertMatchesSchema(response.rawBody(), "schemas/statistics-public-holidays.schema.json");
+        snapshotValidator.assertMatchesSnapshot("statistics-public-holidays", response.rawBody());
     }
 
     @Description("Verifies that GET /Statistics/PublicHolidays without the required countryIsoCode parameter returns 400 Bad Request")
@@ -173,8 +138,6 @@ public class OpenHolidaysPublicApiTest extends BaseApiTest {
     public void shouldReturn400WhenCountryMissingForPublicHolidaysStatistics() {
         var response = openHolidaysApi.getStatisticsPublicHolidaysRaw();
 
-        Allure.step("Validate 400 Bad Request response status", () ->
-            assertThat(response.statusCode()).isEqualTo(400)
-        );
+        assertThat(response.statusCode()).isEqualTo(400);
     }
 }
