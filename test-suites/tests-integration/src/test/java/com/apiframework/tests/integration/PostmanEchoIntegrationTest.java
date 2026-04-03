@@ -1,13 +1,11 @@
 package com.apiframework.tests.integration;
 
 import com.apiframework.domains.postmanecho.endpoint.PostmanEchoApi;
-import com.apiframework.testsupport.assertions.ApiResponseAssert;
 import com.apiframework.testsupport.base.BaseApiTest;
+import com.apiframework.tests.integration.assertions.EchoGetApiResponseAssert;
 import io.qameta.allure.Description;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class PostmanEchoIntegrationTest extends BaseApiTest {
     private PostmanEchoApi echoApi;
@@ -20,17 +18,16 @@ public class PostmanEchoIntegrationTest extends BaseApiTest {
         this.echoApi = api(PostmanEchoApi::new);
     }
 
-    // TODO: Placeholder for the test scenario description
     @Description("Verifies that GET /get response conforms to the JSON schema and matches the golden-file snapshot")
     @Test(description = "GET /get should match schema and snapshot contract")
     public void shouldMatchEchoGetContractAndSnapshot() {
         var response = echoApi.getEcho("suite", "integration");
 
-        ApiResponseAssert.assertThat(response)
+        EchoGetApiResponseAssert.assertThat(response)
                 .hasStatus(200)
                 .hasNonEmptyBody()
                 .matchesSchema("schemas/postman-echo-get.schema.json")
-                .matchesSnapshot("postman-echo-get");
-        assertThat(response.body().args()).containsEntry("suite", "integration");
+                .matchesSnapshot("postman-echo-get")
+                .hasArgsEntry("suite", "integration");
     }
 }

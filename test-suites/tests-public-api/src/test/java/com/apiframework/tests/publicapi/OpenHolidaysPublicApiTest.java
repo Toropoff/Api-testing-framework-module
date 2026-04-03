@@ -1,15 +1,14 @@
 package com.apiframework.tests.publicapi;
 
 import com.apiframework.domains.openholidays.endpoint.OpenHolidaysApi;
-import com.apiframework.domains.openholidays.model.SubdivisionResponse;
 import com.apiframework.testsupport.assertions.ApiResponseAssert;
 import com.apiframework.testsupport.base.BaseApiTest;
 import com.apiframework.tests.publicapi.assertions.HolidayArrayResponseAssert;
+import com.apiframework.tests.publicapi.assertions.StatisticsApiResponseAssert;
+import com.apiframework.tests.publicapi.assertions.SubdivisionArrayResponseAssert;
 import io.qameta.allure.Description;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class OpenHolidaysPublicApiTest extends BaseApiTest {
     private static final String TEST_DATE = "2024-12-25";
@@ -31,14 +30,14 @@ public class OpenHolidaysPublicApiTest extends BaseApiTest {
     public void shouldReturnSubdivisionsForValidCountry() {
         var response = openHolidaysApi.getSubdivisions("DE", "EN");
 
-        ApiResponseAssert.assertThat(response)
+        SubdivisionArrayResponseAssert.assertThat(response)
                 .hasStatus(200)
-                .hasNonEmptyBody();
-        SubdivisionResponse first = response.body()[0];
-        assertThat(first.isoCode()).isNotBlank();
-        assertThat(first.shortName()).isNotBlank();
-        assertThat(first.name()).isNotEmpty();
-        assertThat(first.officialLanguages()).isNotEmpty();
+                .hasNonEmptyBody()
+                .firstSubdivision(s -> s
+                        .hasIsoCodeNotBlank()
+                        .hasShortNameNotBlank()
+                        .hasNameNotEmpty()
+                        .hasOfficialLanguagesNotEmpty());
     }
 
     @Description("Verifies that GET /Subdivisions without a countryIsoCode query parameter returns 400 Bad Request")
@@ -102,13 +101,13 @@ public class OpenHolidaysPublicApiTest extends BaseApiTest {
     public void shouldReturnStatisticsForSchoolHolidays() {
         var response = openHolidaysApi.getStatisticsSchoolHolidays(TEST_COUNTRY);
 
-        ApiResponseAssert.assertThat(response)
+        StatisticsApiResponseAssert.assertThat(response)
                 .hasStatus(200)
                 .hasNonEmptyBody()
+                .hasNonBlankOldestStartDate()
+                .hasNonBlankYoungestStartDate()
                 .matchesSchema("schemas/statistics-school-holidays.schema.json")
                 .matchesSnapshot("statistics-school-holidays");
-        assertThat(response.body().oldestStartDate()).isNotBlank();
-        assertThat(response.body().youngestStartDate()).isNotBlank();
     }
 
     @Description("Verifies that GET /Statistics/SchoolHolidays without the required countryIsoCode parameter returns 400 Bad Request")
@@ -124,13 +123,13 @@ public class OpenHolidaysPublicApiTest extends BaseApiTest {
     public void shouldReturnStatisticsForPublicHolidays() {
         var response = openHolidaysApi.getStatisticsPublicHolidays(TEST_COUNTRY);
 
-        ApiResponseAssert.assertThat(response)
+        StatisticsApiResponseAssert.assertThat(response)
                 .hasStatus(200)
                 .hasNonEmptyBody()
+                .hasNonBlankOldestStartDate()
+                .hasNonBlankYoungestStartDate()
                 .matchesSchema("schemas/statistics-public-holidays.schema.json")
                 .matchesSnapshot("statistics-public-holidays");
-        assertThat(response.body().oldestStartDate()).isNotBlank();
-        assertThat(response.body().youngestStartDate()).isNotBlank();
     }
 
     @Description("Verifies that GET /Statistics/PublicHolidays without the required countryIsoCode parameter returns 400 Bad Request")
