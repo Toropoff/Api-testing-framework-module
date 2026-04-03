@@ -10,8 +10,8 @@ Multi-module API test framework on Java 21 + Gradle + TestNG + REST Assured with
 ## Modules
 
 - `framework-core` — HTTP client (REST Assured), auth (Basic Auth), config, filters.
-- `framework-test-support` — base test classes, retry analyzer, listeners, `NetworkAwareMethodListener`.
-- `framework-reporting` — Allure TestNG listener + native `AllureRestAssured` filter for HTTP step logging (request/response attachments, cURL preview).
+- `framework-test-support` — base test classes, retry analyzer, listeners, `NetworkAwareMethodListener`, AssertJ DSL for API responses.
+- `framework-reporting` — Allure TestNG listener + `AllureHttpFilter` for HTTP step logging (request/response attachments) + vendored `AllureAspectJ` for automatic assertion step generation.
 - `framework-db-oracle` — Oracle datasource + jOOQ repositories + await helpers.
 - `framework-messaging-rabbitmq` — message bus abstraction, RabbitMQ publish/consume, correlation-id checks.
 - `framework-splunk` — placeholder, under separate review.
@@ -22,40 +22,56 @@ Multi-module API test framework on Java 21 + Gradle + TestNG + REST Assured with
 - `test-suites/tests-integration` — integration suite with schema + snapshot contract validation.
 - `test-suites/tests-public-api` — public API suite (Open Holidays).
 
-## Test architecture (v0.02+)
+## Test architecture
 
-Tests follow a flat three-layer pattern: **Test -> Api (POM) -> HttpClient**. No Flow or Assertions abstraction layers.
+Tests follow a flat three-layer pattern: **Test → Api (POM) → HttpClient**, with an optional AssertJ DSL layer for API response assertions.
 
 ```java
-public class PostmanEchoSmokeTest extends BaseApiTest {
-    private PostmanEchoApi echoApi;
+public class OpenHolidaysPublicApiTest extends BaseApiTest {
+    private OpenHolidaysApi openHolidaysApi;
 
-    @Override protected String basePath() { return PostmanEchoApi.basePath(); }
-    @Override protected String targetApi() { return "postman-echo"; }
+    @Override protected String basePath() { return OpenHolidaysApi.basePath(); }
+    @Override protected String targetApi() { return "open-holidays"; }
 
     @BeforeClass(alwaysRun = true, dependsOnMethods = "initHttpClient")
     public void init() {
-        this.echoApi = api(PostmanEchoApi::new);
+        this.openHolidaysApi = api(OpenHolidaysApi::new);
     }
 
-    // TODO: Placeholder for the test scenario description
-    @Description("Verifies that GET /get echoes query parameters back in the response args map")
-    @Test(description = "GET /get should echo query parameter")
-    public void shouldEchoQueryParameter() {
-        var response = echoApi.getEcho("suite", "smoke");
+    @Description("Verifies that GET /PublicHolidaysByDate returns 200 with public holidays conforming to schema and snapshot")
+    @Test(description = "GET /PublicHolidaysByDate should return public holidays for a valid date")
+    public void shouldReturnPublicHolidaysByDate() {
+        var response = openHolidaysApi.getPublicHolidaysByDate("2024-12-25", "EN");
 
-        Allure.step("Validate status 200 and echoed query parameter value", () -> {
-            assertThat(response.statusCode()).isEqualTo(200);
-            assertThat(response.body().args()).containsEntry("suite", "smoke");
-        });
+        HolidayArrayResponseAssert.assertThat(response)
+                .hasStatus(200)
+                .hasNonEmptyBody()
+                .firstHoliday(h -> h
+                        .hasType("Public")
+                        .hasCountry()
+                        .hasCountryIsoCodeNotBlank())
+                .matchesSchema("schemas/public-holidays-by-date.schema.json")
+                .matchesSnapshot("public-holidays-by-date");
     }
 }
 ```
 
 Key patterns:
 - `NetworkAwareMethodListener` — auto-converts network failures to skips (no try/catch in tests)
-- `api(PostmanEchoApi::new)` — constructs Api via method reference
+- `api(OpenHolidaysApi::new)` — constructs Api via method reference
 - `dependsOnMethods = "initHttpClient"` — explicit ordering, no `super` calls
+- **No `Allure.step()` in tests** — Allure steps for assertions are generated automatically via AspectJ LTW (`AllureAspectJ`). Each assertion method call (`hasStatus`, `hasNonEmptyBody`, etc.) produces a named step in the report.
+
+### AssertJ DSL
+
+`framework-test-support` provides a fluent `ApiResponse<T>` assertion DSL:
+
+| Class | Use case |
+|---|---|
+| `ApiResponseAssert<T>` | Generic — any `ApiResponse<T>` check (status, body, schema, snapshot) |
+| `AbstractApiResponseAssert` | Extend for domain-specific chains with `.firstItem(consumer)` patterns |
+
+Domain-specific assertions (e.g. `HolidayArrayResponseAssert`, `HolidayByDateAssert`) live in the test suite's `assertions/` package.
 
 ## Running tests
 
@@ -91,7 +107,7 @@ FRAMEWORK_CLIENT_NAME=my_user FRAMEWORK_CLIENT_SECRET=my_pass ./gradlew test
 
 Report path: `build/reports/allure-report/allureReport/index.html`
 
-HTTP reporting is enabled by default for any test extending `BaseApiTest`. Native `AllureRestAssured` filter provides request/response attachments and cURL preview.
+HTTP reporting is enabled by default for any test extending `BaseApiTest`. `AllureHttpFilter` provides request/response attachments with sensitive-data masking. Assertion steps (e.g. `hasStatus '200'`, `matchesSchema`) are generated automatically by `AllureAspectJ` via AspectJ LTW — no manual `Allure.step()` needed in tests.
 
 ## Config and secrets
 

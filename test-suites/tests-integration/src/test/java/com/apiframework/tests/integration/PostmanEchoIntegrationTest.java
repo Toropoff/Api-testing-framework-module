@@ -1,8 +1,7 @@
 package com.apiframework.tests.integration;
 
-import com.apiframework.testsupport.contracts.JsonSchemaContractValidator;
-import com.apiframework.testsupport.contracts.SnapshotContractValidator;
 import com.apiframework.domains.postmanecho.endpoint.PostmanEchoApi;
+import com.apiframework.testsupport.assertions.ApiResponseAssert;
 import com.apiframework.testsupport.base.BaseApiTest;
 import io.qameta.allure.Description;
 import org.testng.annotations.BeforeClass;
@@ -12,8 +11,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class PostmanEchoIntegrationTest extends BaseApiTest {
     private PostmanEchoApi echoApi;
-    private JsonSchemaContractValidator schemaValidator;
-    private SnapshotContractValidator snapshotValidator;
 
     @Override protected String basePath() { return PostmanEchoApi.basePath(); }
     @Override protected String targetApi() { return "postman-echo"; }
@@ -21,8 +18,6 @@ public class PostmanEchoIntegrationTest extends BaseApiTest {
     @BeforeClass(alwaysRun = true, dependsOnMethods = "initHttpClient")
     public void init() {
         this.echoApi = api(PostmanEchoApi::new);
-        this.schemaValidator = new JsonSchemaContractValidator();
-        this.snapshotValidator = new SnapshotContractValidator();
     }
 
     // TODO: Placeholder for the test scenario description
@@ -31,9 +26,11 @@ public class PostmanEchoIntegrationTest extends BaseApiTest {
     public void shouldMatchEchoGetContractAndSnapshot() {
         var response = echoApi.getEcho("suite", "integration");
 
-        assertThat(response.statusCode()).isEqualTo(200);
+        ApiResponseAssert.assertThat(response)
+                .hasStatus(200)
+                .hasNonEmptyBody()
+                .matchesSchema("schemas/postman-echo-get.schema.json")
+                .matchesSnapshot("postman-echo-get");
         assertThat(response.body().args()).containsEntry("suite", "integration");
-        schemaValidator.assertMatchesSchema(response.rawBody(), "schemas/postman-echo-get.schema.json");
-        snapshotValidator.assertMatchesSnapshot("postman-echo-get", response.rawBody());
     }
 }
