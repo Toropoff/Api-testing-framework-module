@@ -1,6 +1,7 @@
 package com.apiframework.tests.smoke;
 
 import com.apiframework.domains.postmanecho.endpoint.PostmanEchoApi;
+import com.apiframework.testsupport.assertions.ApiResponseAssert;
 import com.apiframework.testsupport.base.BaseApiTest;
 import io.qameta.allure.Description;
 import org.testng.annotations.BeforeClass;
@@ -25,7 +26,10 @@ public class PostmanEchoSmokeTest extends BaseApiTest {
     public void shouldEchoQueryParameter() {
         var response = echoApi.getEcho("suite", "smoke");
 
-        assertThat(response.statusCode()).isEqualTo(200);
+        // DSL hasStatus() instead of assertThat(response.statusCode()).isEqualTo(200) — consistent
+        // with integration/public-api suites; produces named step "hasStatus '200'" in Allure.
+        // Body-field check stays as plain assertj: no generic DSL method for args map entries.
+        ApiResponseAssert.assertThat(response).hasStatus(200);
         assertThat(response.body().args()).containsEntry("suite", "smoke");
     }
 }

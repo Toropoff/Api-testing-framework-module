@@ -6,11 +6,13 @@ import io.qameta.allure.model.StepResult;
 import java.util.List;
 
 /**
- * Allure {@link StepLifecycleListener} that cleans up step noise produced by allure-assertj.
+ * Allure {@link StepLifecycleListener} that cleans up step noise produced by
+ * {@link io.qameta.allure.assertj.AllureAspectJ}.
  *
  * <h3>Truncation</h3>
- * <p>allure-assertj names steps by calling {@code ObjectUtils.toString()} on the value passed
- * to {@code assertThat()}.  For arrays/collections this is a full {@code Arrays.toString()}
+ * <p>{@link io.qameta.allure.assertj.AllureAspectJ} names steps by calling
+ * {@code ObjectUtils.toString()} on the value passed to {@code assertThat()}.
+ * For arrays/collections this is a full {@code Arrays.toString()}
  * dump — an unreadable wall of text.  Names longer than {@value #MAX_NAME_LENGTH} characters
  * are truncated with {@code …}.
  *
@@ -38,7 +40,7 @@ public final class StepNameTruncator implements StepLifecycleListener {
 
     /**
      * Step name prefixes that represent internal library implementation details and should
-     * never appear in the report.  Populated from observed allure-assertj + json-unit-assertj
+     * never appear in the report.  Populated from observed AllureAspectJ + json-unit-assertj
      * interception artefacts.
      */
     private static final List<String> NOISE_PREFIXES = List.of(
