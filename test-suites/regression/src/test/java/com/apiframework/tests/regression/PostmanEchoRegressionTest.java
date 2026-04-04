@@ -29,8 +29,8 @@ public class PostmanEchoRegressionTest extends BaseApiTest {
         ApiResponseAssert.assertThat(response)
                 .hasStatus(200)
                 .body()
-                    .field("json.event").isEqualTo("order-regression")
-                    .field("json.amount").isEqualTo(42)
-                    .field("json.active").isEqualTo(true);
+                    .field("json.event").hasValue("order-regression")
+                    .field("json.amount").hasValue(42)
+                    .field("json.active").hasValue(true);
     }
 }

@@ -56,7 +56,7 @@ public class OpenHolidaysPublicApiTest extends BaseApiTest {
                 .body()
                     .isNotEmpty()
                     .first()
-                    .field("type").isEqualTo("School")
+                    .field("type").hasValue("School")
                     .field("country.isoCode").isNotBlank()
                 .matchesSchema("schemas/school-holidays-by-date.schema.json")
                 .matchesSnapshot("school-holidays-by-date");
@@ -80,7 +80,7 @@ public class OpenHolidaysPublicApiTest extends BaseApiTest {
                 .body()
                     .isNotEmpty()
                     .first()
-                    .field("type").isEqualTo("Public")
+                    .field("type").hasValue("Public")
                     .field("country.isoCode").isNotBlank()
                 .matchesSchema("schemas/public-holidays-by-date.schema.json")
                 .matchesSnapshot("public-holidays-by-date");

@@ -36,7 +36,7 @@ public final class FieldAssert extends AbstractAssert<FieldAssert, JsonNode> {
     /**
      * Asserts the field exists and is non-null.
      */
-    public BodyAssert isNotNull() {
+    public BodyAssert isPresent() {
         if (actual.isMissingNode()) {
             failWithMessage("Expected field '%s' to be non-null but field was missing", path);
         }
@@ -53,7 +53,7 @@ public final class FieldAssert extends AbstractAssert<FieldAssert, JsonNode> {
      * {@code Double}/{@code double}, and {@code Boolean}/{@code boolean} comparisons via
      * type-aware extraction from the {@link JsonNode}.
      */
-    public BodyAssert isEqualTo(Object expected) {
+    public BodyAssert hasValue(Object expected) {
         if (actual.isMissingNode()) {
             failWithMessage("Expected field '%s' to equal <%s> but field was missing", path, expected);
         }

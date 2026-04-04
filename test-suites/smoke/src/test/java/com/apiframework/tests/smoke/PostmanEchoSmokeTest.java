@@ -26,6 +26,6 @@ public class PostmanEchoSmokeTest extends BaseApiTest {
         ApiResponseAssert.assertThat(response)
                 .hasStatus(200)
                 .body()
-                    .field("args.suite").isEqualTo("smoke");
+                    .field("args.suite").hasValue("smoke");
     }
 }

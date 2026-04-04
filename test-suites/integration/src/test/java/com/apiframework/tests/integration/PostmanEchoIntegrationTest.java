@@ -26,7 +26,7 @@ public class PostmanEchoIntegrationTest extends BaseApiTest {
         ApiResponseAssert.assertThat(response)
                 .hasStatus(200)
                 .body()
-                    .field("args.suite").isEqualTo("integration")
+                    .field("args.suite").hasValue("integration")
                 .matchesSchema("schemas/postman-echo-get.schema.json")
                 .matchesSnapshot("postman-echo-get");
     }
