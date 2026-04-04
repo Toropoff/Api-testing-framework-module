@@ -25,10 +25,10 @@ val previousAllureHistoryDir = layout.buildDirectory.dir("reports/allure-report/
 val allureEnvDir = layout.projectDirectory.dir("framework-reporting/allure-results")
 
 val suiteAllureResultDirs = listOf(
-    layout.projectDirectory.dir("test-suites/tests-smoke/build/allure-results"),
-    layout.projectDirectory.dir("test-suites/tests-regression/build/allure-results"),
-    layout.projectDirectory.dir("test-suites/tests-integration/build/allure-results"),
-    layout.projectDirectory.dir("test-suites/tests-public-api/build/allure-results")
+    layout.projectDirectory.dir("test-suites/smoke/build/allure-results"),
+    layout.projectDirectory.dir("test-suites/regression/build/allure-results"),
+    layout.projectDirectory.dir("test-suites/integration/build/allure-results"),
+    layout.projectDirectory.dir("test-suites/public-api/build/allure-results")
 )
 
 val allureSuiteTaskPaths = listOf(
