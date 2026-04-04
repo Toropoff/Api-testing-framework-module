@@ -4,6 +4,7 @@ import com.apiframework.json.JacksonProvider;
 import com.apiframework.model.ApiResponse;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.assertj.core.api.AbstractAssert;
+import java.io.IOException;
 
 /**
  * Generic AssertJ base class for {@link ApiResponse} assertions.
@@ -47,13 +48,24 @@ public abstract class AbstractApiResponseAssert<SELF extends AbstractApiResponse
      */
     public BodyAssert body() {
         isNotNull();
+
+        if (actual.rawBody().isBlank()) {
+            failWithMessage("Response body is empty, cannot parse JSON");
+        }
+
         try {
             if (parsedBody == null) {
-                parsedBody = JacksonProvider.defaultMapper().readTree(actual.rawBody());
+                parsedBody = JacksonProvider
+                        .defaultMapper()
+                        .readTree(actual.rawBody());
             }
-        } catch (Exception e) {
-            failWithMessage("Failed to parse response body as JSON: %s", e.getMessage());
+        } catch (IOException e) {
+            failWithMessage(
+                    "Failed to parse response body as JSON: %s",
+                    e.getMessage()
+            );
         }
+
         return BodyAssert.of(parsedBody, actual.rawBody());
     }
 }
