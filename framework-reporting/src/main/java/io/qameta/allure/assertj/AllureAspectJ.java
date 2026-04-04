@@ -30,11 +30,14 @@ import java.util.stream.Stream;
  * like {@code assertThat 'ApiResponse[statusCode=200, headers=..., rawBody=...]'}. By vendoring
  * the aspect here we can apply the single naming fix below without forking the full library.
  *
- * <p>Only change vs. the original: {@link #logAssertCreation} uses
- * {@code actual.getClass().getSimpleName()} instead of {@code ObjectUtils.toString(actual)},
- * producing {@code assertThat [ApiResponse]} instead of the full {@code toString()} dump.
- *
- * <p>All pointcuts and advice are identical to the original 2.33.0 source.
+ * <p>Changes vs. the original 2.33.0 source:
+ * <ul>
+ *   <li>{@link #logAssertCreation} uses {@code actual.getClass().getSimpleName()} instead of
+ *       {@code ObjectUtils.toString(actual)}, producing {@code assertThat [ApiResponse]} instead
+ *       of the full {@code toString()} dump.</li>
+ *   <li>{@link #stepStart} skips navigation-only methods ({@code body}, {@code first}, {@code at},
+ *       etc.) and applies compact human-readable names for common assertion methods.</li>
+ * </ul>
  */
 @Aspect
 public class AllureAspectJ {
@@ -43,15 +46,21 @@ public class AllureAspectJ {
 
     /*
      * InheritableThreadLocal so that child threads spawned inside a test inherit the same
-     * lifecycle instance — matching the original allure-assertj behaviour.
+     * lifecycle instance — matching the original allure-assertj behavior.
      */
     private static final InheritableThreadLocal<AllureLifecycle> lifecycle =
-            new InheritableThreadLocal<AllureLifecycle>() {
+            new InheritableThreadLocal<>() {
                 @Override
                 protected AllureLifecycle initialValue() {
                     return Allure.getLifecycle();
                 }
             };
+
+    /*
+     * Signals to stepStop/stepFailed that stepStart was skipped for this method call,
+     * so they must not attempt to close a step that was never opened.
+     */
+    private static final ThreadLocal<Boolean> stepSkipped = new ThreadLocal<>();
 
     public static AllureLifecycle getLifecycle() {
         return lifecycle.get();
@@ -105,14 +114,29 @@ public class AllureAspectJ {
         getLifecycle().stopStep(uuid);
     }
 
-    /** Opens an Allure step for each assertion method call. */
+    /** Opens an Allure step for each assertion method call, skipping navigation-only methods. */
     @Before("anyAssert()")
     public void stepStart(final JoinPoint joinPoint) {
         final MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
+        final String methodName = methodSignature.getName();
+        final Object[] args = joinPoint.getArgs();
+
+        if (shouldSkip(methodName)) {
+            stepSkipped.set(true);
+            return;
+        }
+
+        // Reset to default — guards against a stale true from a prior skipped step
+        stepSkipped.set(false);
+
         final String uuid = UUID.randomUUID().toString();
-        final String name = joinPoint.getArgs().length > 0
-                ? String.format("%s '%s'", methodSignature.getName(), arrayToString(joinPoint.getArgs()))
-                : methodSignature.getName();
+        final String pretty = prettify(methodName, args);
+        final String name = pretty != null
+                ? pretty
+                : (args.length > 0
+                        ? String.format("%s '%s'", methodName, arrayToString(args))
+                        : methodName);
+
         final StepResult step = new StepResult()
                 .setName(name)
                 .setStatus(Status.PASSED);
@@ -122,6 +146,10 @@ public class AllureAspectJ {
     /** Marks the current step as failed/broken when an assertion throws. */
     @AfterThrowing(pointcut = "anyAssert()", throwing = "e")
     public void stepFailed(final Throwable e) {
+        if (Boolean.TRUE.equals(stepSkipped.get())) {
+            stepSkipped.remove();
+            return;
+        }
         getLifecycle().updateStep(s -> {
             s.setStatus(ResultsUtils.getStatus(e).orElse(Status.BROKEN));
             s.setStatusDetails(ResultsUtils.getStatusDetails(e).orElse(new StatusDetails()));
@@ -132,6 +160,10 @@ public class AllureAspectJ {
     /** Marks the current step as passed and closes it after a successful assertion. */
     @AfterReturning("anyAssert()")
     public void stepStop() {
+        if (Boolean.TRUE.equals(stepSkipped.get())) {
+            stepSkipped.remove();
+            return;
+        }
         getLifecycle().updateStep(s -> s.setStatus(Status.PASSED));
         getLifecycle().stopStep();
     }
@@ -139,6 +171,25 @@ public class AllureAspectJ {
     // -------------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------------
+
+    private boolean shouldSkip(final String methodName) {
+        return methodName.equals("isNotNull")
+                || methodName.equals("assertThat")
+                || methodName.equals("body")
+                || methodName.equals("first")
+                || methodName.equals("at");
+    }
+
+    private String prettify(final String methodName, final Object[] args) {
+        return switch (methodName) {
+            case "isEqualTo"  -> args.length > 0 && args[0] != null
+                                    ? "equals '" + args[0] + "'"
+                                    : "equals";
+            case "isNotBlank" -> "not blank";
+            case "isNotEmpty" -> "not empty";
+            default           -> null;
+        };
+    }
 
     private static String arrayToString(final Object[] args) {
         return Stream.of(args)
