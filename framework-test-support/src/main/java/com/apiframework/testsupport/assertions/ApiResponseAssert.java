@@ -3,17 +3,14 @@ package com.apiframework.testsupport.assertions;
 import com.apiframework.model.ApiResponse;
 
 /**
- * Generic {@link ApiResponse} assertion for use when no domain-specific sub-class exists.
- *
- * <p>Domain modules that need richer assertions (e.g. per-body-field checks or collection
- * traversal) should extend {@link AbstractApiResponseAssert} directly and add domain methods,
- * rather than adding them here.
+ * Entry point for the generic {@link ApiResponse} assertion DSL.
  *
  * <p>Usage:
  * <pre>{@code
  * ApiResponseAssert.assertThat(response)
  *     .hasStatus(200)
- *     .hasNonEmptyBody()
+ *     .body()
+ *         .field("args.key").isEqualTo("value")
  *     .matchesSchema("schemas/my-schema.json")
  *     .matchesSnapshot("my-snapshot");
  * }</pre>
