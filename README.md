@@ -43,13 +43,13 @@ public class OpenHolidaysPublicApiTest extends BaseApiTest {
     public void shouldReturnPublicHolidaysByDate() {
         var response = openHolidaysApi.getPublicHolidaysByDate("2024-12-25", "EN");
 
-        HolidayArrayResponseAssert.assertThat(response)
+        ApiResponseAssert.assertThat(response)
                 .hasStatus(200)
-                .hasNonEmptyBody()
-                .firstHoliday(h -> h
-                        .hasType("Public")
-                        .hasCountry()
-                        .hasCountryIsoCodeNotBlank())
+                .body()
+                    .isNotEmpty()
+                    .first()
+                    .field("type").isEqualTo("Public")
+                    .field("country.isoCode").isNotBlank()
                 .matchesSchema("schemas/public-holidays-by-date.schema.json")
                 .matchesSnapshot("public-holidays-by-date");
     }
@@ -60,18 +60,22 @@ Key patterns:
 - `NetworkAwareMethodListener` — auto-converts network failures to skips (no try/catch in tests)
 - `api(OpenHolidaysApi::new)` — constructs Api via method reference
 - `dependsOnMethods = "initHttpClient"` — explicit ordering, no `super` calls
-- **No `Allure.step()` in tests** — Allure steps for assertions are generated automatically via AspectJ LTW (`AllureAspectJ`). Each assertion method call (`hasStatus`, `hasNonEmptyBody`, etc.) produces a named step in the report.
+- **No `Allure.step()` in tests** — Allure steps for assertions are generated automatically via AspectJ LTW (`AllureAspectJ`). Each assertion method call (`hasStatus`, `isNotEmpty`, `field`, etc.) produces a named step in the report.
 
 ### AssertJ DSL
 
-`framework-test-support` provides a fluent `ApiResponse<T>` assertion DSL:
+`framework-test-support` provides a generic fluent `ApiResponse<T>` assertion DSL built on Jackson `JsonNode` navigation:
 
-| Class | Use case |
+| Class | Role |
 |---|---|
-| `ApiResponseAssert<T>` | Generic — any `ApiResponse<T>` check (status, body, schema, snapshot) |
-| `AbstractApiResponseAssert` | Extend for domain-specific chains with `.firstItem(consumer)` patterns |
+| `ApiResponseAssert<T>` | Entry point. `assertThat(response)` → fluent chain. Methods: `hasStatus(int)`, `body()`. |
+| `AbstractApiResponseAssert` | Base class. Parses `rawBody` once (lazy-cached `JsonNode`). Produces `BodyAssert` via `body()`. |
+| `BodyAssert` | Body-level assertions. `isNotEmpty()`, `at(int)`, `first()`, `field(String dotPath)`, `hasField(String dotPath)`, `matchesSchema(String)`, `matchesSnapshot(String)`. |
+| `FieldAssert` | Field-level terminal assertions. `isEqualTo(Object)`, `isNotBlank()`, `isNotEmpty()`, `isNotNull()`. All terminals return `BodyAssert` for continued chaining. |
 
-Domain-specific assertions (e.g. `HolidayArrayResponseAssert`, `HolidayByDateAssert`) live in the test suite's `assertions/` package.
+Chain return types: `.body()` → `BodyAssert` → `.field("x")` → `FieldAssert` → `.isEqualTo(...)` → `BodyAssert` → `.matchesSchema(...)` → `BodyAssert`.
+
+Schema and snapshot validation always operate on the **full original response JSON** (`rawBody`), regardless of how deep `.first()` or `.at(i)` has navigated the `JsonNode` cursor. `.matchesSchema()` / `.matchesSnapshot()` are only on `BodyAssert` — calling them on `FieldAssert` is a compile error by design.
 
 ## Running tests
 

@@ -3,9 +3,6 @@ package com.apiframework.tests.publicapi;
 import com.apiframework.domains.openholidays.endpoint.OpenHolidaysApi;
 import com.apiframework.testsupport.assertions.ApiResponseAssert;
 import com.apiframework.testsupport.base.BaseApiTest;
-import com.apiframework.tests.publicapi.assertions.HolidayArrayResponseAssert;
-import com.apiframework.tests.publicapi.assertions.StatisticsApiResponseAssert;
-import com.apiframework.tests.publicapi.assertions.SubdivisionArrayResponseAssert;
 import io.qameta.allure.Description;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -30,14 +27,15 @@ public class OpenHolidaysPublicApiTest extends BaseApiTest {
     public void shouldReturnSubdivisionsForValidCountry() {
         var response = openHolidaysApi.getSubdivisions("DE", "EN");
 
-        SubdivisionArrayResponseAssert.assertThat(response)
+        ApiResponseAssert.assertThat(response)
                 .hasStatus(200)
-                .hasNonEmptyBody()
-                .firstSubdivision(s -> s
-                        .hasIsoCodeNotBlank()
-                        .hasShortNameNotBlank()
-                        .hasNameNotEmpty()
-                        .hasOfficialLanguagesNotEmpty());
+                .body()
+                    .isNotEmpty()
+                    .first()
+                    .field("isoCode").isNotBlank()
+                    .field("shortName").isNotBlank()
+                    .field("name").isNotEmpty()
+                    .field("officialLanguages").isNotEmpty();
     }
 
     @Description("Verifies that GET /Subdivisions without a countryIsoCode query parameter returns 400 Bad Request")
@@ -53,13 +51,13 @@ public class OpenHolidaysPublicApiTest extends BaseApiTest {
     public void shouldReturnSchoolHolidaysByDate() {
         var response = openHolidaysApi.getSchoolHolidaysByDate(TEST_DATE, TEST_LANGUAGE);
 
-        HolidayArrayResponseAssert.assertThat(response)
+        ApiResponseAssert.assertThat(response)
                 .hasStatus(200)
-                .hasNonEmptyBody()
-                .firstHoliday(h -> h
-                        .hasType("School")
-                        .hasCountry()
-                        .hasCountryIsoCodeNotBlank())
+                .body()
+                    .isNotEmpty()
+                    .first()
+                    .field("type").isEqualTo("School")
+                    .field("country.isoCode").isNotBlank()
                 .matchesSchema("schemas/school-holidays-by-date.schema.json")
                 .matchesSnapshot("school-holidays-by-date");
     }
@@ -77,13 +75,13 @@ public class OpenHolidaysPublicApiTest extends BaseApiTest {
     public void shouldReturnPublicHolidaysByDate() {
         var response = openHolidaysApi.getPublicHolidaysByDate(TEST_DATE, TEST_LANGUAGE);
 
-        HolidayArrayResponseAssert.assertThat(response)
+        ApiResponseAssert.assertThat(response)
                 .hasStatus(200)
-                .hasNonEmptyBody()
-                .firstHoliday(h -> h
-                        .hasType("Public")
-                        .hasCountry()
-                        .hasCountryIsoCodeNotBlank())
+                .body()
+                    .isNotEmpty()
+                    .first()
+                    .field("type").isEqualTo("Public")
+                    .field("country.isoCode").isNotBlank()
                 .matchesSchema("schemas/public-holidays-by-date.schema.json")
                 .matchesSnapshot("public-holidays-by-date");
     }
@@ -101,11 +99,11 @@ public class OpenHolidaysPublicApiTest extends BaseApiTest {
     public void shouldReturnStatisticsForSchoolHolidays() {
         var response = openHolidaysApi.getStatisticsSchoolHolidays(TEST_COUNTRY);
 
-        StatisticsApiResponseAssert.assertThat(response)
+        ApiResponseAssert.assertThat(response)
                 .hasStatus(200)
-                .hasNonEmptyBody()
-                .hasNonBlankOldestStartDate()
-                .hasNonBlankYoungestStartDate()
+                .body()
+                    .field("oldestStartDate").isNotBlank()
+                    .field("youngestStartDate").isNotBlank()
                 .matchesSchema("schemas/statistics-school-holidays.schema.json")
                 .matchesSnapshot("statistics-school-holidays");
     }
@@ -123,11 +121,11 @@ public class OpenHolidaysPublicApiTest extends BaseApiTest {
     public void shouldReturnStatisticsForPublicHolidays() {
         var response = openHolidaysApi.getStatisticsPublicHolidays(TEST_COUNTRY);
 
-        StatisticsApiResponseAssert.assertThat(response)
+        ApiResponseAssert.assertThat(response)
                 .hasStatus(200)
-                .hasNonEmptyBody()
-                .hasNonBlankOldestStartDate()
-                .hasNonBlankYoungestStartDate()
+                .body()
+                    .field("oldestStartDate").isNotBlank()
+                    .field("youngestStartDate").isNotBlank()
                 .matchesSchema("schemas/statistics-public-holidays.schema.json")
                 .matchesSnapshot("statistics-public-holidays");
     }

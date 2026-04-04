@@ -1,8 +1,8 @@
 package com.apiframework.tests.integration;
 
 import com.apiframework.domains.postmanecho.endpoint.PostmanEchoApi;
+import com.apiframework.testsupport.assertions.ApiResponseAssert;
 import com.apiframework.testsupport.base.BaseApiTest;
-import com.apiframework.tests.integration.assertions.EchoGetApiResponseAssert;
 import io.qameta.allure.Description;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -23,11 +23,11 @@ public class PostmanEchoIntegrationTest extends BaseApiTest {
     public void shouldMatchEchoGetContractAndSnapshot() {
         var response = echoApi.getEcho("suite", "integration");
 
-        EchoGetApiResponseAssert.assertThat(response)
+        ApiResponseAssert.assertThat(response)
                 .hasStatus(200)
-                .hasNonEmptyBody()
+                .body()
+                    .field("args.suite").isEqualTo("integration")
                 .matchesSchema("schemas/postman-echo-get.schema.json")
-                .matchesSnapshot("postman-echo-get")
-                .hasArgsEntry("suite", "integration");
+                .matchesSnapshot("postman-echo-get");
     }
 }
