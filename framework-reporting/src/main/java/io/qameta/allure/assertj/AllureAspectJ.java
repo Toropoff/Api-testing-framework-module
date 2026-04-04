@@ -104,12 +104,19 @@ public class AllureAspectJ {
         final String typeName = (joinPoint.getArgs().length > 0 && joinPoint.getArgs()[0] != null)
                 ? joinPoint.getArgs()[0].getClass().getSimpleName()
                 : "value";
-        final String name = String.format("assertThat [%s]", typeName);
 
+        //Noise filter#2 cuts:
+        if (typeName.equals("ArrayNode")
+                 || typeName.equals("ObjectNode") // assert in json validation step
+                 || typeName.equals("TextNode")   // assert in json validation step (array validation)
+                 || typeName.equals("Jackson2Node")) return; // assert in snapshot validation step
+
+        final String name = String.format("assertThat [%s]", typeName);
         final String uuid = UUID.randomUUID().toString();
         final StepResult step = new StepResult()
                 .setName(name)
                 .setStatus(Status.PASSED);
+
         getLifecycle().startStep(uuid, step);
         getLifecycle().stopStep(uuid);
     }
@@ -182,11 +189,20 @@ public class AllureAspectJ {
 
     private String prettify(final String methodName, final Object[] args) {
         return switch (methodName) {
-            case "isEqualTo"  -> args.length > 0 && args[0] != null
-                                    ? "equals '" + args[0] + "'"
-                                    : "equals";
+            case "isEqualTo" -> {                           // cut's JSON in report step to 80smb
+                if (args.length == 0 || args[0] == null) {  // JSON null-protection
+                    yield "equals";
+                }
+                String value = String.valueOf(args[0]);
+                yield value.length() > 80                               // number off smb to set/change
+                        ? "equals '" + value.substring(0, 80) + "...'"  // number off smb to set/change
+                        : "equals '" + value + "'";
+            }
+            case "hasStatus" -> "status " + args[0];
             case "isNotBlank" -> "not blank";
             case "isNotEmpty" -> "not empty";
+            case "matchesSchema" -> "matches schema";
+            case "matchesSnapshot" -> "matches snapshot";
             default           -> null;
         };
     }
