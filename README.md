@@ -17,10 +17,10 @@ Multi-module API test framework on Java 21 + Gradle + TestNG + REST Assured with
 - `framework-splunk` — placeholder, under separate review.
 - `domains/postman-echo` — Postman Echo API domain (`endpoint/`, `model/`).
 - `domains/open-holidays` — Open Holidays API domain (`endpoint/`, `model/`).
-- `test-suites/tests-smoke` — smoke suite.
-- `test-suites/tests-regression` — regression suite with retry and data providers.
-- `test-suites/tests-integration` — integration suite with schema + snapshot contract validation.
-- `test-suites/tests-public-api` — public API suite (Open Holidays).
+- `test-suites/smoke` — smoke suite.
+- `test-suites/regression` — regression suite with retry and data providers.
+- `test-suites/integration` — integration suite with schema + snapshot contract validation.
+- `test-suites/public-api` — public API suite (Open Holidays).
 
 ## Test architecture
 
@@ -48,7 +48,7 @@ public class OpenHolidaysPublicApiTest extends BaseApiTest {
                 .body()
                     .isNotEmpty()
                     .first()
-                    .field("type").isEqualTo("Public")
+                    .field("type").hasValue("Public")
                     .field("country.isoCode").isNotBlank()
                 .matchesSchema("schemas/public-holidays-by-date.schema.json")
                 .matchesSnapshot("public-holidays-by-date");
@@ -71,9 +71,9 @@ Key patterns:
 | `ApiResponseAssert<T>` | Entry point. `assertThat(response)` → fluent chain. Methods: `hasStatus(int)`, `body()`. |
 | `AbstractApiResponseAssert` | Base class. Parses `rawBody` once (lazy-cached `JsonNode`). Produces `BodyAssert` via `body()`. |
 | `BodyAssert` | Body-level assertions. `isNotEmpty()`, `at(int)`, `first()`, `field(String dotPath)`, `hasField(String dotPath)`, `matchesSchema(String)`, `matchesSnapshot(String)`. |
-| `FieldAssert` | Field-level terminal assertions. `isEqualTo(Object)`, `isNotBlank()`, `isNotEmpty()`, `isNotNull()`. All terminals return `BodyAssert` for continued chaining. |
+| `FieldAssert` | Field-level terminal assertions. `hasValue(Object)`, `isNotBlank()`, `isNotEmpty()`, `isPresent()`. All terminals return `BodyAssert` for continued chaining. |
 
-Chain return types: `.body()` → `BodyAssert` → `.field("x")` → `FieldAssert` → `.isEqualTo(...)` → `BodyAssert` → `.matchesSchema(...)` → `BodyAssert`.
+Chain return types: `.body()` → `BodyAssert` → `.field("x")` → `FieldAssert` → `.hasValue(...)` → `BodyAssert` → `.matchesSchema(...)` → `BodyAssert`.
 
 Schema and snapshot validation always operate on the **full original response JSON** (`rawBody`), regardless of how deep `.first()` or `.at(i)` has navigated the `JsonNode` cursor. `.matchesSchema()` / `.matchesSnapshot()` are only on `BodyAssert` — calling them on `FieldAssert` is a compile error by design.
 
@@ -111,7 +111,7 @@ FRAMEWORK_CLIENT_NAME=my_user FRAMEWORK_CLIENT_SECRET=my_pass ./gradlew test
 
 Report path: `build/reports/allure-report/allureReport/index.html`
 
-HTTP reporting is enabled by default for any test extending `BaseApiTest`. `AllureHttpFilter` provides request/response attachments with sensitive-data masking. Assertion steps (e.g. `hasStatus '200'`, `matchesSchema`) are generated automatically by `AllureAspectJ` via AspectJ LTW — no manual `Allure.step()` needed in tests.
+HTTP reporting is enabled by default for any test extending `BaseApiTest`. `AllureHttpFilter` provides request/response attachments with sensitive-data masking. Assertion steps (e.g. `status 200`, `matches schema`) are generated automatically by `AllureAspectJ` via AspectJ LTW — no manual `Allure.step()` needed in tests. Navigation steps (`body`, `first`, `at`) and framework-internal assertion types are filtered from the report automatically.
 
 ## Config and secrets
 
@@ -126,7 +126,7 @@ Environment secret convention (`ApiClientFactory`):
 
 ## Suite entry points
 
-- Smoke: `test-suites/tests-smoke/src/test/resources/testng-smoke.xml`
-- Regression: `test-suites/tests-regression/src/test/resources/testng-regression.xml`
-- Integration: `test-suites/tests-integration/src/test/resources/testng-integration.xml`
-- Public API: `test-suites/tests-public-api/src/test/resources/testng-public-api.xml`
+- Smoke: `test-suites/smoke/src/test/resources/testng-smoke.xml`
+- Regression: `test-suites/regression/src/test/resources/testng-regression.xml`
+- Integration: `test-suites/integration/src/test/resources/testng-integration.xml`
+- Public API: `test-suites/public-api/src/test/resources/testng-public-api.xml`
