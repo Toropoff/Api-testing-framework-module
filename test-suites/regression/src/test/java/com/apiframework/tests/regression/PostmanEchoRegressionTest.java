@@ -1,7 +1,7 @@
 package com.apiframework.tests.regression;
 
-import com.apiframework.domains.postmanecho.endpoint.PostmanEchoApi;
-import com.apiframework.domains.postmanecho.model.EchoPayload;
+import com.apiframework.postmanecho.endpoint.PostmanEchoApi;
+import com.apiframework.postmanecho.model.EchoPayload;
 import com.apiframework.testsupport.assertions.ApiResponseAssert;
 import com.apiframework.testsupport.base.BaseApiTest;
 import com.apiframework.testsupport.retry.RetrySetting;

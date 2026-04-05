@@ -1,6 +1,6 @@
 package com.apiframework.tests.integration;
 
-import com.apiframework.domains.postmanecho.endpoint.PostmanEchoApi;
+import com.apiframework.postmanecho.endpoint.PostmanEchoApi;
 import com.apiframework.testsupport.assertions.ApiResponseAssert;
 import com.apiframework.testsupport.base.BaseApiTest;
 import io.qameta.allure.Description;

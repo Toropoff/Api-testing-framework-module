@@ -1,6 +1,6 @@
 package com.apiframework.tests.publicapi;
 
-import com.apiframework.domains.openholidays.endpoint.OpenHolidaysApi;
+import com.apiframework.openholidays.endpoint.OpenHolidaysApi;
 import com.apiframework.testsupport.assertions.ApiResponseAssert;
 import com.apiframework.testsupport.base.BaseApiTest;
 import io.qameta.allure.Description;
