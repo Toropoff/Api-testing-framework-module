@@ -1,4 +1,4 @@
-package com.apiframework.domains.openholidays.endpoint;
+package com.apiframework.openholidays.endpoint;
 
 enum OpenHolidaysRoute {
     SUBDIVISIONS("/Subdivisions"),

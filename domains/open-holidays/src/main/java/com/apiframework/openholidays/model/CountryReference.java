@@ -1,4 +1,4 @@
-package com.apiframework.domains.openholidays.model;
+package com.apiframework.openholidays.model;
 
 public record CountryReference(String isoCode) {
 }

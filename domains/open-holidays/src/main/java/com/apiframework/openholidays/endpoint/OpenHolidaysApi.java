@@ -1,11 +1,11 @@
-package com.apiframework.domains.openholidays.endpoint;
+package com.apiframework.openholidays.endpoint;
 
 import com.apiframework.config.DomainConfig;
 import com.apiframework.http.HttpClient;
 import com.apiframework.model.ApiResponse;
-import com.apiframework.domains.openholidays.model.HolidayByDateResponse;
-import com.apiframework.domains.openholidays.model.StatisticsResponse;
-import com.apiframework.domains.openholidays.model.SubdivisionResponse;
+import com.apiframework.openholidays.model.HolidayByDateResponse;
+import com.apiframework.openholidays.model.StatisticsResponse;
+import com.apiframework.openholidays.model.SubdivisionResponse;
 
 import java.util.Map;
 import java.util.Objects;

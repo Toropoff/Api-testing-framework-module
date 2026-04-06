@@ -1,11 +1,11 @@
-package com.apiframework.domains.postmanecho.endpoint;
+package com.apiframework.postmanecho.endpoint;
 
 import com.apiframework.config.DomainConfig;
 import com.apiframework.http.HttpClient;
 import com.apiframework.model.ApiResponse;
-import com.apiframework.domains.postmanecho.model.EchoGetResponse;
-import com.apiframework.domains.postmanecho.model.EchoPayload;
-import com.apiframework.domains.postmanecho.model.EchoPostResponse;
+import com.apiframework.postmanecho.model.EchoGetResponse;
+import com.apiframework.postmanecho.model.EchoPayload;
+import com.apiframework.postmanecho.model.EchoPostResponse;
 
 import java.util.Map;
 import java.util.Objects;

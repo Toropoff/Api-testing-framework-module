@@ -1,4 +1,4 @@
-package com.apiframework.domains.postmanecho.endpoint;
+package com.apiframework.postmanecho.endpoint;
 
 enum PostmanEchoRoute {
     GET_ECHO("/get"),

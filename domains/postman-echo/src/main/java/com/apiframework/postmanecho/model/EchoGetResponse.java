@@ -1,4 +1,4 @@
-package com.apiframework.domains.postmanecho.model;
+package com.apiframework.postmanecho.model;
 
 import java.util.Map;
 
