@@ -15,7 +15,7 @@ public class OpenHolidaysPublicApiTest extends BaseApiTest {
     private OpenHolidaysApi openHolidaysApi;
 
     @Override protected String basePath() { return OpenHolidaysApi.basePath(); }
-    @Override protected String targetApi() { return "open-holidays"; }
+    @Override protected String targetApi() { return OpenHolidaysApi.displayApiName(); }
 
     @BeforeClass(alwaysRun = true, dependsOnMethods = "initHttpClient")
     public void init() {
@@ -30,11 +30,11 @@ public class OpenHolidaysPublicApiTest extends BaseApiTest {
         ApiResponseAssert.assertThat(response)
                 .hasStatus(200)
                 .body()
-                    .isNotEmpty()
-                    .first()
-                    .field("isoCode").isNotBlank()
-                    .field("shortName").isNotBlank()
-                    .field("name").isNotEmpty()
+                    .isNotEmpty()  // asserts the array has ≥1 element
+                    .first()       // narrows scope → body[0] (a SubdivisionResponse object)
+                    .field("isoCode").isNotBlank()   // checks body[0].isoCode
+                    .field("shortName").isNotBlank() // checks body[0].shortName
+                    .field("name").isNotEmpty()     // checks body[0].Name
                     .field("officialLanguages").isNotEmpty();
     }
 

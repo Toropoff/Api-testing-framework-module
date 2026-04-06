@@ -11,7 +11,7 @@ public class PostmanEchoSmokeTest extends BaseApiTest {
     private PostmanEchoApi echoApi;
 
     @Override protected String basePath() { return PostmanEchoApi.basePath(); }
-    @Override protected String targetApi() { return "postman-echo"; }
+    @Override protected String targetApi() { return PostmanEchoApi.displayApiName(); }
 
     @BeforeClass(alwaysRun = true, dependsOnMethods = "initHttpClient")
     public void init() {

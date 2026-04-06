@@ -19,8 +19,17 @@ public final class PostmanEchoApi {
             : System.getProperty("framework.env", "dev")
     );
 
+    private static final String API_NAME = DomainConfig.loadApiName(
+        PostmanEchoApi.class,
+        "postman-echo.properties"
+    );
+
     public static String basePath() {
         return BASE_PATH;
+    }
+
+    public static String displayApiName() {
+        return API_NAME;
     }
 
     private final HttpClient httpClient;

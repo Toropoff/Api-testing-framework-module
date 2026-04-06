@@ -66,4 +66,30 @@ public final class DomainConfig {
             "basePath not set in " + propertiesFile
         );
     }
+
+    /**
+     * Loads the {@code apiName} property from the given classpath resource.
+     * Unlike {@code basePath}, {@code apiName} is environment-independent — it is a stable
+     * display label used for reporting (e.g. Allure parentSuite).
+     *
+     * @param contextClass   class whose classloader is used to locate the resource
+     * @param propertiesFile classpath resource name, e.g. {@code "postman-echo.properties"}
+     * @return the resolved api name, never null
+     * @throws IllegalStateException if the file is missing or apiName is not set
+     */
+    public static String loadApiName(Class<?> contextClass, String propertiesFile) {
+        Properties props = new Properties();
+        try (InputStream in = contextClass.getClassLoader().getResourceAsStream(propertiesFile)) {
+            if (in == null) {
+                throw new IllegalStateException(propertiesFile + " not found on classpath");
+            }
+            props.load(in);
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to load " + propertiesFile, e);
+        }
+        return Objects.requireNonNull(
+            props.getProperty("apiName"),
+            "apiName not set in " + propertiesFile
+        );
+    }
 }
