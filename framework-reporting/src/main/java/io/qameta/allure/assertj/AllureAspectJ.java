@@ -115,8 +115,9 @@ public class AllureAspectJ {
 
         //Noise filter#2 cuts:
         if (typeName.equals("ArrayNode")
-                 || typeName.equals("ObjectNode") // assert in json validation step
-                 || typeName.equals("TextNode")   // assert in json validation step (array validation)
+                 || typeName.equals("ApiResponse") // assertThat [ApiResponse]
+                 || typeName.equals("ObjectNode") //  assert in json validation step
+                 || typeName.equals("TextNode")   //  assert in json validation step (array validation)
                  || typeName.equals("Jackson2Node")) return; // assert in snapshot validation step
 
         final String name = String.format("assertThat [%s]", typeName);
