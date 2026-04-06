@@ -57,10 +57,18 @@ public class AllureAspectJ {
             };
 
     /*
-     * Signals to stepStop/stepFailed that stepStart was skipped for this method call,
-     * so they must not attempt to close a step that was never opened.
+     * Reentrant depth counter: incremented by stepStart when a method is in the skip list,
+     * decremented by stepStop/stepFailed. Using a counter (not a boolean) correctly handles
+     * nested skipped calls — e.g. body() calling isNotNull() internally, where both are in
+     * the skip list. A boolean would be cleared by the inner call's stepStop, causing the
+     * outer call's stepStop to proceed and attempt to close a step that was never opened.
      */
-    private static final ThreadLocal<Boolean> stepSkipped = new ThreadLocal<>();
+    private static final ThreadLocal<Integer> skipDepth = new ThreadLocal<>();
+
+    private static int getSkipDepth() {
+        final Integer v = skipDepth.get();
+        return v == null ? 0 : v;
+    }
 
     public static AllureLifecycle getLifecycle() {
         return lifecycle.get();
@@ -129,12 +137,12 @@ public class AllureAspectJ {
         final Object[] args = joinPoint.getArgs();
 
         if (shouldSkip(methodName)) {
-            stepSkipped.set(true);
+            skipDepth.set(getSkipDepth() + 1);
             return;
         }
 
-        // Reset to default — guards against a stale true from a prior skipped step
-        stepSkipped.set(false);
+        // Reset depth counter — clears any stale state left by a prior incomplete skip cycle
+        skipDepth.remove();
 
         final String uuid = UUID.randomUUID().toString();
         final String pretty = prettify(methodName, args);
@@ -153,8 +161,10 @@ public class AllureAspectJ {
     /** Marks the current step as failed/broken when an assertion throws. */
     @AfterThrowing(pointcut = "anyAssert()", throwing = "e")
     public void stepFailed(final Throwable e) {
-        if (Boolean.TRUE.equals(stepSkipped.get())) {
-            stepSkipped.remove();
+        final int depth = getSkipDepth();
+        if (depth > 0) {
+            final int next = depth - 1;
+            if (next == 0) skipDepth.remove(); else skipDepth.set(next);
             return;
         }
         getLifecycle().updateStep(s -> {
@@ -167,8 +177,10 @@ public class AllureAspectJ {
     /** Marks the current step as passed and closes it after a successful assertion. */
     @AfterReturning("anyAssert()")
     public void stepStop() {
-        if (Boolean.TRUE.equals(stepSkipped.get())) {
-            stepSkipped.remove();
+        final int depth = getSkipDepth();
+        if (depth > 0) {
+            final int next = depth - 1;
+            if (next == 0) skipDepth.remove(); else skipDepth.set(next);
             return;
         }
         getLifecycle().updateStep(s -> s.setStatus(Status.PASSED));
