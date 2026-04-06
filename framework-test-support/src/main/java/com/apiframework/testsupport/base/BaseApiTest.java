@@ -55,7 +55,8 @@ public abstract class BaseApiTest {
 
     protected HttpClient httpClient() {
         if (httpClient == null) {
-            initHttpClient();
+            throw new IllegalStateException(
+                "httpClient is null — initHttpClient() did not run. Check @BeforeClass lifecycle setup.");
         }
         return httpClient;
     }
