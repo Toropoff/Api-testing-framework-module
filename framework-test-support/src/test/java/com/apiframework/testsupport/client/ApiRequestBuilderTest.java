@@ -26,37 +26,34 @@ public class ApiRequestBuilderTest {
         }
         @Override public <T> ApiResponse<T> get(String path, Map<String, ?> q, Class<T> type) {
             lastPath = path; lastQuery = q; lastMethod = "GET";
-            return emptyResponse(type);
+            return emptyResponse();
         }
         @Override public <T> ApiResponse<T> post(String path, Object body, Class<T> type) {
             lastPath = path; lastBody = body; lastMethod = "POST";
-            return emptyResponse(type);
+            return emptyResponse();
         }
         @Override public <T> ApiResponse<T> put(String path, Object body, Class<T> type) {
             lastPath = path; lastBody = body; lastMethod = "PUT";
-            return emptyResponse(type);
+            return emptyResponse();
         }
         @Override public <T> ApiResponse<T> patch(String path, Object body, Class<T> type) {
             lastPath = path; lastBody = body; lastMethod = "PATCH";
-            return emptyResponse(type);
+            return emptyResponse();
         }
         @Override public <T> ApiResponse<T> delete(String path, Class<T> type) {
             lastPath = path; lastMethod = "DELETE";
-            return emptyResponse(type);
+            return emptyResponse();
         }
-        private <T> ApiResponse<T> emptyResponse(Class<T> type) {
-            return new ApiResponse<>(200, Map.of(), null, 0, null, "");
+
+        @SuppressWarnings("unchecked")
+        private <T> ApiResponse<T> emptyResponse() {
+            return (ApiResponse<T>) new ApiResponse<>(200, Map.of(), null, 0, null, "");
         }
     }
 
-    // --- helpers ---
+    private StubHttpClient stub() { return new StubHttpClient(); }
 
-    private <T> ApiRequestBuilder<T> builder(HttpVerb verb, String relUrl, Class<T> type) {
-        StubHttpClient stub = new StubHttpClient();
-        return new ApiRequestBuilder<>(stub, "", new EndpointDefinition(verb, relUrl), type);
-    }
-
-    private <T> ApiRequestBuilder<T> builderWithStub(StubHttpClient stub, HttpVerb verb, String relUrl, Class<T> type) {
+    private <T> ApiRequestBuilder<T> builder(StubHttpClient stub, HttpVerb verb, String relUrl, Class<T> type) {
         return new ApiRequestBuilder<>(stub, "", new EndpointDefinition(verb, relUrl), type);
     }
 
@@ -64,13 +61,12 @@ public class ApiRequestBuilderTest {
 
     @Test
     public void getWithMultipleQueryParamsBuildsExpectedMap() {
-        StubHttpClient stub = new StubHttpClient();
-        builderWithStub(stub, HttpVerb.GET, "https://api.example.com/items", String.class)
+        var stub = stub();
+        builder(stub, HttpVerb.GET, "https://api.example.com/items", String.class)
             .query("k1", "v1")
             .query("k2", 42)
             .send();
 
-        assertThat(stub.lastQuery).containsKey("k1").containsKey("k2");
         assertThat(stub.lastQuery.get("k1")).isEqualTo("v1");
         assertThat(stub.lastQuery.get("k2")).isEqualTo(42);
         assertThat(stub.lastMethod).isEqualTo("GET");
@@ -78,8 +74,8 @@ public class ApiRequestBuilderTest {
 
     @Test
     public void querySkipsNullValues() {
-        StubHttpClient stub = new StubHttpClient();
-        builderWithStub(stub, HttpVerb.GET, "https://api.example.com/items", String.class)
+        var stub = stub();
+        builder(stub, HttpVerb.GET, "https://api.example.com/items", String.class)
             .query("key", null)
             .send();
 
@@ -87,9 +83,22 @@ public class ApiRequestBuilderTest {
     }
 
     @Test
+    public void bodyFieldBuildsExpectedMap() {
+        var stub = stub();
+        builder(stub, HttpVerb.POST, "https://api.example.com/items", String.class)
+            .bodyField("event", "created")
+            .bodyField("amount", 100)
+            .send();
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> sentBody = (Map<String, Object>) stub.lastBody;
+        assertThat(sentBody).containsEntry("event", "created").containsEntry("amount", 100);
+    }
+
+    @Test
     public void bodyFieldSkipsNullValues() {
-        StubHttpClient stub = new StubHttpClient();
-        builderWithStub(stub, HttpVerb.POST, "https://api.example.com/items", String.class)
+        var stub = stub();
+        builder(stub, HttpVerb.POST, "https://api.example.com/items", String.class)
             .bodyField("f1", "val")
             .bodyField("f2", null)
             .send();
@@ -101,8 +110,8 @@ public class ApiRequestBuilderTest {
 
     @Test
     public void pathParamIsSubstitutedInUrl() {
-        StubHttpClient stub = new StubHttpClient();
-        builderWithStub(stub, HttpVerb.GET, "https://api.example.com/users/{id}/orders", String.class)
+        var stub = stub();
+        builder(stub, HttpVerb.GET, "https://api.example.com/users/{id}/orders", String.class)
             .pathParam("id", 7)
             .send();
 
@@ -110,44 +119,9 @@ public class ApiRequestBuilderTest {
     }
 
     @Test
-    public void postWithBodyDtoIgnoresBodyFields() {
-        StubHttpClient stub = new StubHttpClient();
-        Object dto = new Object();
-        builderWithStub(stub, HttpVerb.POST, "https://api.example.com/items", String.class)
-            .body(dto)
-            .send();
-
-        assertThat(stub.lastBody).isSameAs(dto);
-    }
-
-    @Test
-    public void postWithBodyFieldsBuildsExpectedMap() {
-        StubHttpClient stub = new StubHttpClient();
-        builderWithStub(stub, HttpVerb.POST, "https://api.example.com/items", String.class)
-            .bodyField("event", "created")
-            .bodyField("amount", 100)
-            .send();
-
-        @SuppressWarnings("unchecked")
-        Map<String, Object> sentBody = (Map<String, Object>) stub.lastBody;
-        assertThat(sentBody).containsEntry("event", "created").containsEntry("amount", 100);
-    }
-
-    @Test
-    public void mixingBodyAndBodyFieldThrows() {
-        assertThatThrownBy(() ->
-            builder(HttpVerb.POST, "https://api.example.com/items", String.class)
-                .body(new Object())
-                .bodyField("k", "v")
-                .send()
-        ).isInstanceOf(IllegalStateException.class)
-            .hasMessageContaining("not both");
-    }
-
-    @Test
     public void deleteCallsClientDeleteAndIgnoresBody() {
-        StubHttpClient stub = new StubHttpClient();
-        builderWithStub(stub, HttpVerb.DELETE, "https://api.example.com/items/1", String.class).send();
+        var stub = stub();
+        builder(stub, HttpVerb.DELETE, "https://api.example.com/items/1", String.class).send();
 
         assertThat(stub.lastMethod).isEqualTo("DELETE");
         assertThat(stub.lastBody).isNull();
@@ -155,8 +129,9 @@ public class ApiRequestBuilderTest {
 
     @Test
     public void headerFollowedBySendThrowsUnsupported() {
+        var stub = stub();
         assertThatThrownBy(() ->
-            builder(HttpVerb.GET, "https://api.example.com/items", String.class)
+            builder(stub, HttpVerb.GET, "https://api.example.com/items", String.class)
                 .header("X-Foo", "bar")
                 .send()
         ).isInstanceOf(UnsupportedOperationException.class);

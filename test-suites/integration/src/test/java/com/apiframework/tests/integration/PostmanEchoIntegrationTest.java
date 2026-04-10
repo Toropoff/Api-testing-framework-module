@@ -1,6 +1,5 @@
 package com.apiframework.tests.integration;
 
-import com.apiframework.postmanecho.model.EchoGetResponse;
 import com.apiframework.testsupport.assertions.ApiResponseAssert;
 import com.apiframework.testsupport.base.BaseApiTest;
 import io.qameta.allure.Description;
@@ -14,7 +13,7 @@ public class PostmanEchoIntegrationTest extends BaseApiTest {
     @Description("Verifies that GET /get response conforms to the JSON schema and matches the golden-file snapshot")
     @Test(description = "GET /get should match schema and snapshot contract")
     public void shouldMatchEchoGetContractAndSnapshot() {
-        var response = call("get-echo", EchoGetResponse.class)
+        var response = call("get-echo", String.class)
                 .query("suite", "integration")
                 .send();
 

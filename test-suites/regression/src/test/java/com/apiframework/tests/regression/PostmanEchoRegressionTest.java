@@ -1,7 +1,5 @@
 package com.apiframework.tests.regression;
 
-import com.apiframework.postmanecho.model.EchoPayload;
-import com.apiframework.postmanecho.model.EchoPostResponse;
 import com.apiframework.testsupport.assertions.ApiResponseAssert;
 import com.apiframework.testsupport.base.BaseApiTest;
 import com.apiframework.testsupport.retry.RetrySetting;
@@ -17,8 +15,10 @@ public class PostmanEchoRegressionTest extends BaseApiTest {
     @Description("Verifies that POST /post echoes all JSON payload fields back in the response body")
     @Test(description = "POST /post should echo json payload")
     public void shouldEchoJsonPayload() {
-        var response = call("post-echo", EchoPostResponse.class)
-                .body(new EchoPayload("order-regression", 42, true))
+        var response = call("post-echo", String.class)
+                .bodyField("event", "order-regression")
+                .bodyField("amount", 42)
+                .bodyField("active", true)
                 .send();
 
         ApiResponseAssert.assertThat(response)
