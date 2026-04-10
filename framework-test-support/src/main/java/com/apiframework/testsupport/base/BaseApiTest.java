@@ -77,8 +77,7 @@ public abstract class BaseApiTest {
 
     @BeforeMethod(alwaysRun = true)
     public void beforeEach(ITestResult result) {
-        TestExecutionContext testContext = new TestExecutionContext(UUID.randomUUID().toString());
-        CorrelationIdFilter.set(testContext.correlationId());
+        CorrelationIdFilter.set(UUID.randomUUID().toString());
         Allure.label("parentSuite", apiName);
     }
 
