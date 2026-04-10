@@ -1,14 +1,19 @@
 package com.apiframework.testsupport.base;
 
-import com.apiframework.client.ApiClientFactory;
 import com.apiframework.config.ConfigResolver;
 import com.apiframework.config.DomainConfig;
 import com.apiframework.config.EndpointDefinition;
+import com.apiframework.config.FrameworkRuntimeConfig;
 import com.apiframework.http.CorrelationIdFilter;
 import com.apiframework.http.HttpClient;
+import com.apiframework.http.RestAssuredHttpClient;
 import com.apiframework.testsupport.client.ApiRequestBuilder;
 import com.apiframework.testsupport.network.NetworkAwareMethodListener;
 import io.qameta.allure.Allure;
+import io.restassured.builder.RequestSpecBuilder;
+import io.restassured.config.HttpClientConfig;
+import io.restassured.config.RestAssuredConfig;
+import io.restassured.http.ContentType;
 import org.testng.ITestResult;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -19,27 +24,48 @@ import java.util.Map;
 import java.util.TreeSet;
 import java.util.UUID;
 
+import static io.restassured.RestAssured.preemptive;
+
 @Listeners({NetworkAwareMethodListener.class})
 public abstract class BaseApiTest {
 
-    private HttpClient                     httpClient;
-    private String                         baseUrl;
+    private HttpClient                      httpClient;
+    private String                          baseUrl;
     private Map<String, EndpointDefinition> endpoints;
-    private String                         apiName;
+    private String                          apiName;
 
     /** The only domain binding a test must provide. Matches the {domain}.properties filename (without extension). */
     protected abstract String domain();
 
-    // Runs once per test class. Resolves runtime config and loads endpoint catalog for this domain.
     @BeforeClass(alwaysRun = true)
     public void initHttpClient() {
-        this.endpoints  = DomainConfig.loadEndpoints(domain());
-        this.apiName    = DomainConfig.loadApiName(domain());
-        this.baseUrl    = ConfigResolver.resolveFromSystem().baseUrl();
-        this.httpClient = ApiClientFactory.build();
+        FrameworkRuntimeConfig config = ConfigResolver.resolveFromSystem();
+
+        this.endpoints = DomainConfig.loadEndpoints(domain());
+        this.apiName   = DomainConfig.loadApiName(domain());
+        this.baseUrl   = config.baseUrl();
+
+        RestAssuredConfig restAssuredConfig = RestAssuredConfig.config().httpClient(
+            HttpClientConfig.httpClientConfig()
+                .setParam("http.connection.timeout", config.connectTimeoutMs())
+                .setParam("http.socket.timeout",     config.readTimeoutMs())
+        );
+
+        RequestSpecBuilder specBuilder = new RequestSpecBuilder()
+            .setContentType(ContentType.JSON)
+            .setConfig(restAssuredConfig)
+            .addFilter(new CorrelationIdFilter());
+
+        String clientName   = System.getenv("FRAMEWORK_CLIENT_NAME");
+        String clientSecret = System.getenv("FRAMEWORK_CLIENT_SECRET");
+        if (clientName != null && !clientName.isBlank()
+                && clientSecret != null && !clientSecret.isBlank()) {
+            specBuilder.setAuth(preemptive().basic(clientName, clientSecret));
+        }
+
+        this.httpClient = new RestAssuredHttpClient(specBuilder.build());
     }
 
-    // Runs before each @Test. Creates a fresh correlationId, activates it on the HTTP filter, and labels the Allure parentSuite.
     @BeforeMethod(alwaysRun = true)
     public void beforeEach(ITestResult result) {
         TestExecutionContext testContext = new TestExecutionContext(UUID.randomUUID().toString());
@@ -47,18 +73,11 @@ public abstract class BaseApiTest {
         Allure.label("parentSuite", apiName);
     }
 
-    // Runs after each @Test. Clears the correlationId from the ThreadLocal to prevent leak to the next test.
     @AfterMethod(alwaysRun = true)
     public void afterEach() {
         CorrelationIdFilter.clear();
     }
 
-    /**
-     * Fluent request entry. Looks up the endpoint in the loaded catalog and returns a builder
-     * pre-wired with verb + relUrl + baseUrl.
-     *
-     * @throws IllegalStateException if {@code endpointKey} is not found in this domain's catalog
-     */
     protected <T> ApiRequestBuilder<T> call(String endpointKey, Class<T> responseType) {
         EndpointDefinition def = endpoints.get(endpointKey);
         if (def == null) {
