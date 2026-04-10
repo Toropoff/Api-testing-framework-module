@@ -64,16 +64,6 @@ public final class RestAssuredHttpClient implements HttpClient {
         return execute(path, "DELETE", null, Map.of(), responseType);
     }
 
-    @Override
-    public ApiResponse<String> getRaw(String path) {
-        return get(path, Map.of(), String.class);
-    }
-
-    @Override
-    public ApiResponse<String> getRaw(String path, Map<String, ?> queryParams) {
-        return get(path, queryParams, String.class);
-    }
-
     // --- internals ---
 
     private <T> ApiResponse<T> execute(

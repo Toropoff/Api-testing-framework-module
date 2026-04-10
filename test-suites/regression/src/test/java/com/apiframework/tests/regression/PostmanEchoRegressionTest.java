@@ -1,30 +1,25 @@
 package com.apiframework.tests.regression;
 
-import com.apiframework.postmanecho.endpoint.PostmanEchoApi;
 import com.apiframework.postmanecho.model.EchoPayload;
+import com.apiframework.postmanecho.model.EchoPostResponse;
 import com.apiframework.testsupport.assertions.ApiResponseAssert;
 import com.apiframework.testsupport.base.BaseApiTest;
 import com.apiframework.testsupport.retry.RetrySetting;
 import io.qameta.allure.Description;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 @RetrySetting(maxRetries = 2, delayMs = 200)
 public class PostmanEchoRegressionTest extends BaseApiTest {
-    private PostmanEchoApi echoApi;
 
-    @Override protected String basePath() { return PostmanEchoApi.basePath(); }
-    @Override protected String targetApi() { return PostmanEchoApi.displayApiName(); }
-
-    @BeforeClass(alwaysRun = true, dependsOnMethods = "initHttpClient")
-    public void init() {
-        this.echoApi = api(PostmanEchoApi::new);
-    }
+    @Override
+    protected String domain() { return "postman-echo"; }
 
     @Description("Verifies that POST /post echoes all JSON payload fields back in the response body")
     @Test(description = "POST /post should echo json payload")
     public void shouldEchoJsonPayload() {
-        var response = echoApi.postEcho(new EchoPayload("order-regression", 42, true));
+        var response = call("post-echo", EchoPostResponse.class)
+                .body(new EchoPayload("order-regression", 42, true))
+                .send();
 
         ApiResponseAssert.assertThat(response)
                 .hasStatus(200)

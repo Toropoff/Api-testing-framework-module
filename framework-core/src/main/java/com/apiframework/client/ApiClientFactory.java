@@ -1,5 +1,6 @@
 package com.apiframework.client;
 
+import com.apiframework.config.ConfigResolver;
 import com.apiframework.config.FrameworkRuntimeConfig;
 import com.apiframework.http.CorrelationIdFilter;
 import com.apiframework.http.HttpClient;
@@ -13,15 +14,16 @@ import static io.restassured.RestAssured.preemptive;
 
 /**
  * Factory that assembles the HTTP client stack: RequestSpecification (timeouts, filters,
- * content type, credentials) &rarr; RestAssuredHttpClient.
- * Full URL is composed as rootUrl + basePath. Credentials injected from env vars.
+ * content type, credentials) → RestAssuredHttpClient.
+ * URL composition is handled by UrlResolver at request send time — this factory does not bake
+ * any URL into the client.
  */
 public final class ApiClientFactory {
     private ApiClientFactory() {
     }
 
-    public static HttpClient create(String basePath, FrameworkRuntimeConfig config) {
-        String baseUrl = config.rootUrl() + basePath;
+    public static HttpClient build() {
+        FrameworkRuntimeConfig config = ConfigResolver.resolveFromSystem();
 
         RestAssuredConfig restAssuredConfig = RestAssuredConfig.config().httpClient(
             HttpClientConfig.httpClientConfig()
@@ -30,7 +32,6 @@ public final class ApiClientFactory {
         );
 
         RequestSpecBuilder specBuilder = new RequestSpecBuilder()
-            .setBaseUri(baseUrl)
             .setContentType(ContentType.JSON)
             .setConfig(restAssuredConfig)
             .addFilter(new CorrelationIdFilter());

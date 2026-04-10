@@ -22,8 +22,4 @@ public interface HttpClient {
     <T> ApiResponse<T> patch(String path, Object body, Class<T> responseType);
 
     <T> ApiResponse<T> delete(String path, Class<T> responseType);
-
-    ApiResponse<String> getRaw(String path);
-
-    ApiResponse<String> getRaw(String path, Map<String, ?> queryParams);
 }

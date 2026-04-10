@@ -2,12 +2,15 @@ package com.apiframework.config;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.LinkedHashMap;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 
 /**
- *a lightweight, centralized utility for loading domain-specific basePath
- *from environment-aware property files with fallback and validation
+ * Centralized utility for loading domain endpoint catalogs and metadata from
+ * {@code {domainName}.properties} files on the classpath.
  */
 public final class DomainConfig {
 
@@ -15,81 +18,58 @@ public final class DomainConfig {
     }
 
     /**
-     * Loads the {@code basePath} property using an env-aware lookup.
-     * Tries {@code {basename}.{env}.properties} first (e.g. {@code postman-echo.uat.properties}),
-     * then falls back to {@code propertiesFile}.
+     * Loads all endpoint definitions from {@code {domainName}.properties} on the classpath.
+     * Each endpoint is described by an {@code endpoints.{key}.method} and
+     * {@code endpoints.{key}.relUrl} pair.
      *
-     * @param contextClass   class whose classloader is used to locate the resource
-     * @param propertiesFile classpath resource name, e.g. {@code "postman-echo.properties"}
-     * @param env            environment name, e.g. {@code "uat"}
-     * @return the resolved base path, never null
+     * @param domainName the domain identifier, e.g. {@code "open-holidays"}
+     * @return immutable map of endpoint key → {@link EndpointDefinition}
+     * @throws IllegalStateException if the file is missing or any endpoint definition is incomplete
      */
-    public static String loadBasePath(Class<?> contextClass, String propertiesFile, String env) {
-        if (env != null && !env.isBlank()) {
-            String envFile = propertiesFile.replace(".properties", "." + env + ".properties");
-            try (InputStream in = contextClass.getClassLoader().getResourceAsStream(envFile)) {
-                if (in != null) {
-                    Properties props = new Properties();
-                    props.load(in);
-                    String basePath = props.getProperty("basePath");
-                    if (basePath != null) {
-                        return basePath;
-                    }
-                }
-            } catch (IOException ignored) {
-                // fall through to default file
+    public static Map<String, EndpointDefinition> loadEndpoints(String domainName) {
+        Properties p = loadDomainProperties(domainName);
+        Map<String, EndpointDefinition> out = new LinkedHashMap<>();
+        for (String name : p.stringPropertyNames()) {
+            if (!name.startsWith("endpoints.") || !name.endsWith(".method")) continue;
+            String key    = name.substring("endpoints.".length(), name.length() - ".method".length());
+            String method = p.getProperty("endpoints." + key + ".method");
+            String relUrl = p.getProperty("endpoints." + key + ".relUrl");
+            if (method == null || relUrl == null) {
+                throw new IllegalStateException(
+                    "Incomplete endpoint '" + key + "' in " + domainName + ".properties");
             }
+            out.put(key, new EndpointDefinition(
+                HttpVerb.valueOf(method.toUpperCase(Locale.ROOT)), relUrl));
         }
-        return loadBasePath(contextClass, propertiesFile);
+        return Map.copyOf(out);
     }
 
     /**
-     * Loads the {@code basePath} property from the given classpath resource.
+     * Loads {@code apiName} from {@code {domainName}.properties}.
+     * {@code apiName} is environment-independent — it is a stable display label used for reporting.
      *
-     * @param contextClass   class whose classloader is used to locate the resource
-     * @param propertiesFile classpath resource name, e.g. {@code "postman-echo.properties"}
-     * @return the resolved base path, never null
-     * @throws IllegalStateException if the file is missing or basePath is not set
-     */
-    public static String loadBasePath(Class<?> contextClass, String propertiesFile) {
-        Properties props = new Properties();
-        try (InputStream in = contextClass.getClassLoader().getResourceAsStream(propertiesFile)) {
-            if (in == null) {
-                throw new IllegalStateException(propertiesFile + " not found on classpath");
-            }
-            props.load(in);
-        } catch (IOException e) {
-            throw new IllegalStateException("Failed to load " + propertiesFile, e);
-        }
-        return Objects.requireNonNull(
-            props.getProperty("basePath"),
-            "basePath not set in " + propertiesFile
-        );
-    }
-
-    /**
-     * Loads the {@code apiName} property from the given classpath resource.
-     * Unlike {@code basePath}, {@code apiName} is environment-independent — it is a stable
-     * display label used for reporting (e.g. Allure parentSuite).
-     *
-     * @param contextClass   class whose classloader is used to locate the resource
-     * @param propertiesFile classpath resource name, e.g. {@code "postman-echo.properties"}
-     * @return the resolved api name, never null
+     * @param domainName the domain identifier, e.g. {@code "postman-echo"}
+     * @return the api name, never null
      * @throws IllegalStateException if the file is missing or apiName is not set
      */
-    public static String loadApiName(Class<?> contextClass, String propertiesFile) {
+    public static String loadApiName(String domainName) {
+        Properties p = loadDomainProperties(domainName);
+        return Objects.requireNonNull(
+            p.getProperty("apiName"),
+            "apiName not set in " + domainName + ".properties");
+    }
+
+    private static Properties loadDomainProperties(String domainName) {
+        String file = domainName + ".properties";
         Properties props = new Properties();
-        try (InputStream in = contextClass.getClassLoader().getResourceAsStream(propertiesFile)) {
+        try (InputStream in = DomainConfig.class.getClassLoader().getResourceAsStream(file)) {
             if (in == null) {
-                throw new IllegalStateException(propertiesFile + " not found on classpath");
+                throw new IllegalStateException(file + " not found on classpath");
             }
             props.load(in);
         } catch (IOException e) {
-            throw new IllegalStateException("Failed to load " + propertiesFile, e);
+            throw new IllegalStateException("Failed to load " + file, e);
         }
-        return Objects.requireNonNull(
-            props.getProperty("apiName"),
-            "apiName not set in " + propertiesFile
-        );
+        return props;
     }
 }

@@ -19,18 +19,18 @@ public final class ConfigResolver {
             env = System.getProperty("framework.env", "dev");
         }
 
-        String rootUrl = loadRootUrl(env);
+        String baseUrl = loadBaseUrl(env);
 
         return new FrameworkRuntimeConfig(
             System.getProperty("framework.profile", "dev"),
             env,
-            rootUrl,
+            baseUrl,
             Integer.getInteger("http.connectTimeoutMs", 5000),
             Integer.getInteger("http.readTimeoutMs", 15000)
         );
     }
 
-    private static String loadRootUrl(String env) {
+    private static String loadBaseUrl(String env) {
         String file = "environments/" + env + ".properties";
         try (InputStream in = ConfigResolver.class.getClassLoader().getResourceAsStream(file)) {
             if (in == null) {
@@ -38,8 +38,8 @@ public final class ConfigResolver {
             }
             Properties props = new Properties();
             props.load(in);
-            String rootUrl = props.getProperty("rootUrl", "");
-            return rootUrl == null ? "" : rootUrl.trim();
+            String baseUrl = props.getProperty("baseUrl", "");
+            return baseUrl == null ? "" : baseUrl.trim();
         } catch (IOException e) {
             return "";
         }
