@@ -22,6 +22,7 @@ public final class ConfigResolver {
         String baseUrl = loadBaseUrl(env);
 
         return new FrameworkRuntimeConfig(
+            // TODO: profile is never read by any caller (BaseApiTest uses baseUrl/timeouts, AllureTestNgListener uses env); candidate for removal
             System.getProperty("framework.profile", "dev"),
             env,
             baseUrl,
@@ -38,6 +39,7 @@ public final class ConfigResolver {
             }
             Properties props = new Properties();
             props.load(in);
+            // TODO: dead null-check — getProperty(key, default) never returns null; simplify to props.getProperty("baseUrl", "").trim()
             String baseUrl = props.getProperty("baseUrl", "");
             return baseUrl == null ? "" : baseUrl.trim();
         } catch (IOException e) {
