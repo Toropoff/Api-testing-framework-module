@@ -1,7 +1,7 @@
 dependencies {
     testImplementation(project(":framework-test-support"))
     testImplementation(project(":framework-reporting"))
-    testImplementation(project(":domains:postman-echo"))
+    testImplementation(project(":domains"))
 }
 
 tasks.test {

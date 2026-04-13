@@ -1,7 +1,7 @@
 dependencies {
     testImplementation(project(":framework-test-support"))
     testImplementation(project(":framework-reporting"))
-    testImplementation(project(":domains:open-holidays"))
+    testImplementation(project(":domains"))
 }
 
 tasks.test {

@@ -25,7 +25,6 @@ import java.io.InputStream;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Properties;
 import java.util.TreeSet;
 import java.util.UUID;
@@ -48,9 +47,7 @@ public abstract class BaseApiTest {
         FrameworkRuntimeConfig config = ConfigResolver.resolveFromSystem();
 
         Properties domainProps = loadDomainProperties(domain());
-        this.apiName   = Objects.requireNonNull(
-            domainProps.getProperty("apiName"),
-            "apiName not set in " + domain() + ".properties");
+        this.apiName   = domain();
         this.endpoints = parseEndpoints(domainProps);
         this.baseUrl   = config.baseUrl();
 
@@ -108,17 +105,28 @@ public abstract class BaseApiTest {
     }
 
     private static Properties loadDomainProperties(String domainName) {
-        String file = domainName + ".properties";
-        Properties props = new Properties();
-        try (InputStream in = BaseApiTest.class.getClassLoader().getResourceAsStream(file)) {
+        Properties all = new Properties();
+        try (InputStream in = BaseApiTest.class.getClassLoader().getResourceAsStream("domains.properties")) {
             if (in == null) {
-                throw new IllegalStateException(file + " not found on classpath");
+                throw new IllegalStateException("domains.properties not found on classpath");
             }
-            props.load(in);
+            all.load(in);
         } catch (IOException e) {
-            throw new IllegalStateException("Failed to load " + file, e);
+            throw new IllegalStateException("Failed to load domains.properties", e);
         }
-        return props;
+
+        String prefix = domainName + ".";
+        Properties domain = new Properties();
+        for (String key : all.stringPropertyNames()) {
+            if (key.startsWith(prefix)) {
+                domain.setProperty(key.substring(prefix.length()), all.getProperty(key));
+            }
+        }
+        if (domain.isEmpty()) {
+            throw new IllegalStateException(
+                "No properties found for domain '" + domainName + "' in domains.properties");
+        }
+        return domain;
     }
 
     private static Map<String, EndpointDefinition> parseEndpoints(Properties p) {
