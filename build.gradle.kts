@@ -24,19 +24,9 @@ val aggregatedAllureResultsDir = layout.buildDirectory.dir("allure-results")
 val previousAllureHistoryDir = layout.buildDirectory.dir("reports/allure-report/allureReport/history")
 val allureEnvDir = layout.projectDirectory.dir("framework-reporting/allure-results")
 
-val suiteAllureResultDirs = listOf(
-    layout.projectDirectory.dir("test-suites/smoke/build/allure-results"),
-    layout.projectDirectory.dir("test-suites/regression/build/allure-results"),
-    layout.projectDirectory.dir("test-suites/integration/build/allure-results"),
-    layout.projectDirectory.dir("test-suites/public-api/build/allure-results")
-)
-
-val allureSuiteTaskPaths = listOf(
-    ":test-suites:smoke:test",
-    ":test-suites:regression:test",
-    ":test-suites:integration:test",
-    ":test-suites:public-api:test"
-)
+val suiteNames = listOf("smoke", "regression", "integration", "public-api")
+val suiteAllureResultDirs = suiteNames.map { layout.projectDirectory.dir("test-suites/$it/build/allure-results") }
+val allureSuiteTaskPaths = suiteNames.map { ":test-suites:$it:test" }
 
 tasks.register("collectAllureResults") {
     group = "verification"
