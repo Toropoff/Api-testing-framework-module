@@ -1,88 +1,371 @@
 package com.apiframework.splunk;
 
-import com.apiframework.splunk.model.SplunkJobStatus;
+import com.apiframework.json.JacksonProvider;
+import com.apiframework.splunk.config.SplunkConnectionConfig;
+import com.apiframework.splunk.config.SplunkSearchConfig;
 import com.apiframework.splunk.model.SplunkSearchResponse;
+import com.apiframework.splunk.model.SplunkSearchResult;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.restassured.RestAssured;
+import io.restassured.response.Response;
+import io.restassured.specification.RequestSpecification;
+import org.awaitility.Awaitility;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-/**
- * Interface for interacting with the Splunk REST API.
- * Follows the same interface + AutoCloseable pattern as MessageBusClient.
- *
- * <p>Provides two search execution modes:
- * <ul>
- *     <li><b>One-shot</b> — synchronous search via {@code /services/search/jobs/export},
- *         suitable for targeted queries with a moderate number of results.</li>
- *     <li><b>Async job</b> — creates a search job, polls for completion, then retrieves results.
- *         Suitable for larger or long-running searches.</li>
- * </ul>
- */
-public interface SplunkClient extends AutoCloseable {
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Predicate;
 
-    /**
-     * Executes a one-shot search using {@code /services/search/jobs/export}.
-     * Blocks until all results are returned.
-     *
-     * @param splQuery     the SPL search query string
-     * @param earliestTime earliest time bound (e.g. "-15m", "2024-01-01T00:00:00")
-     * @param latestTime   latest time bound (e.g. "now")
-     * @return search response containing all matching results
-     */
-    SplunkSearchResponse searchOneShot(String splQuery, String earliestTime, String latestTime);
+public final class SplunkClient implements AutoCloseable {
 
-    /**
-     * Executes a one-shot search using default time bounds from {@code SplunkSearchConfig}.
-     *
-     * @param splQuery the SPL search query string
-     * @return search response containing all matching results
-     */
-    SplunkSearchResponse searchOneShot(String splQuery);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SplunkClient.class);
 
-    /**
-     * Creates an asynchronous search job via {@code /services/search/jobs}.
-     * Returns the job SID (search ID) for subsequent polling.
-     *
-     * @param splQuery     the SPL search query string
-     * @param earliestTime earliest time bound
-     * @param latestTime   latest time bound
-     * @return the search job SID (string identifier)
-     */
-    String createSearchJob(String splQuery, String earliestTime, String latestTime);
+    private static final String AUTH_LOGIN_ENDPOINT = "/services/auth/login";
+    private static final String SEARCH_JOBS_ENDPOINT = "/services/search/jobs";
+    private static final String SEARCH_EXPORT_ENDPOINT = "/services/search/jobs/export";
 
-    /**
-     * Retrieves the current status of a search job by its SID.
-     *
-     * @param jobSid the search job SID
-     * @return the current job status
-     */
-    SplunkJobStatus getJobStatus(String jobSid);
+    private final SplunkConnectionConfig connectionConfig;
+    private final SplunkSearchConfig searchConfig;
+    private final ObjectMapper objectMapper;
+    private volatile String sessionKey;
 
-    /**
-     * Retrieves the results of a completed search job.
-     * Should only be called after the job reaches {@link SplunkJobStatus#DONE} status.
-     *
-     * @param jobSid the search job SID
-     * @return search response containing the job's results
-     */
-    SplunkSearchResponse getJobResults(String jobSid);
+    public SplunkClient(SplunkConnectionConfig connectionConfig) {
+        this(connectionConfig, SplunkSearchConfig.defaults());
+    }
 
-    /**
-     * Executes an async search job and blocks until it completes, then returns results.
-     * Combines {@link #createSearchJob}, status polling, and {@link #getJobResults} into one call.
-     *
-     * @param splQuery     the SPL search query string
-     * @param earliestTime earliest time bound
-     * @param latestTime   latest time bound
-     * @return search response containing the completed job's results
-     */
-    SplunkSearchResponse searchBlocking(String splQuery, String earliestTime, String latestTime);
+    public SplunkClient(SplunkConnectionConfig connectionConfig, SplunkSearchConfig searchConfig) {
+        this.connectionConfig = connectionConfig;
+        this.searchConfig = searchConfig;
+        this.objectMapper = JacksonProvider.defaultMapper();
+    }
 
-    /**
-     * Executes an async search job with default time bounds and blocks until completion.
-     *
-     * @param splQuery the SPL search query string
-     * @return search response containing the completed job's results
-     */
-    SplunkSearchResponse searchBlocking(String splQuery);
+    // ── Search operations ───────────────────────────────────────────
+
+    public SplunkSearchResponse searchOneShot(String splQuery, String earliestTime, String latestTime) {
+        LOGGER.info("Executing one-shot Splunk search: {} [earliest={}, latest={}]",
+            splQuery, earliestTime, latestTime);
+        Response response = executeWithAuth(() ->
+            baseRequest()
+                .formParam("search", splQuery)
+                .formParam("earliest_time", earliestTime)
+                .formParam("latest_time", latestTime)
+                .formParam("output_mode", "json")
+                .post(connectionConfig.baseUrl() + SEARCH_EXPORT_ENDPOINT)
+        );
+        List<SplunkSearchResult> results = parseExportResults(response.getBody().asString());
+        LOGGER.info("One-shot search returned {} result(s)", results.size());
+        return new SplunkSearchResponse(results);
+    }
+
+    public SplunkSearchResponse searchOneShot(String splQuery) {
+        return searchOneShot(splQuery, searchConfig.defaultEarliestTime(), searchConfig.defaultLatestTime());
+    }
+
+    public String createSearchJob(String splQuery, String earliestTime, String latestTime) {
+        LOGGER.info("Creating Splunk search job: {} [earliest={}, latest={}]",
+            splQuery, earliestTime, latestTime);
+        Response response = executeWithAuth(() ->
+            baseRequest()
+                .formParam("search", splQuery)
+                .formParam("earliest_time", earliestTime)
+                .formParam("latest_time", latestTime)
+                .formParam("output_mode", "json")
+                .post(connectionConfig.baseUrl() + SEARCH_JOBS_ENDPOINT)
+        );
+        try {
+            JsonNode root = objectMapper.readTree(response.getBody().asString());
+            String sid = root.path("sid").asText();
+            if (sid == null || sid.isBlank()) {
+                throw new IllegalStateException("Splunk search job response did not contain a SID");
+            }
+            LOGGER.info("Splunk search job created with SID: {}", sid);
+            return sid;
+        } catch (IllegalStateException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new IllegalStateException("Unable to parse Splunk search job response", e);
+        }
+    }
+
+    public SplunkJobStatus getJobStatus(String jobSid) {
+        Response response = executeWithAuth(() ->
+            baseRequest()
+                .queryParam("output_mode", "json")
+                .get(connectionConfig.baseUrl() + SEARCH_JOBS_ENDPOINT + "/" + jobSid)
+        );
+        try {
+            JsonNode root = objectMapper.readTree(response.getBody().asString());
+            String dispatchState = root.path("entry").path(0)
+                .path("content").path("dispatchState").asText();
+            return SplunkJobStatus.fromDispatchState(dispatchState);
+        } catch (Exception e) {
+            throw new IllegalStateException("Unable to parse Splunk job status for SID: " + jobSid, e);
+        }
+    }
+
+    public SplunkSearchResponse getJobResults(String jobSid) {
+        LOGGER.info("Retrieving results for Splunk job SID: {}", jobSid);
+        Response response = executeWithAuth(() ->
+            baseRequest()
+                .queryParam("output_mode", "json")
+                .queryParam("count", 0)
+                .get(connectionConfig.baseUrl() + SEARCH_JOBS_ENDPOINT + "/" + jobSid + "/results")
+        );
+        List<SplunkSearchResult> results = parseJobResults(response.getBody().asString());
+        LOGGER.info("Job {} returned {} result(s)", jobSid, results.size());
+        return new SplunkSearchResponse(results);
+    }
+
+    public SplunkSearchResponse searchBlocking(String splQuery, String earliestTime, String latestTime) {
+        String sid = createSearchJob(splQuery, earliestTime, latestTime);
+        long timeoutMs = searchConfig.awaitTimeout().toMillis();
+        long pollMs = searchConfig.jobPollInterval().toMillis();
+        long startTime = System.currentTimeMillis();
+        while (System.currentTimeMillis() - startTime < timeoutMs) {
+            SplunkJobStatus status = getJobStatus(sid);
+            LOGGER.debug("Splunk job {} status: {}", sid, status);
+            if (status == SplunkJobStatus.DONE) {
+                return getJobResults(sid);
+            }
+            if (status == SplunkJobStatus.FAILED) {
+                throw new IllegalStateException("Splunk search job failed. SID: " + sid);
+            }
+            try {
+                Thread.sleep(pollMs);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException("Interrupted while waiting for Splunk job: " + sid, e);
+            }
+        }
+        throw new IllegalStateException(
+            "Splunk search job timed out after " + searchConfig.awaitTimeout() + ". SID: " + sid
+        );
+    }
+
+    public SplunkSearchResponse searchBlocking(String splQuery) {
+        return searchBlocking(splQuery, searchConfig.defaultEarliestTime(), searchConfig.defaultLatestTime());
+    }
+
+    // ── Await operations ────────────────────────────────────────────
+
+    public SplunkSearchResponse awaitResults(
+        String splQuery,
+        String earliestTime,
+        String latestTime,
+        Predicate<SplunkSearchResponse> predicate
+    ) {
+        LOGGER.info("Awaiting Splunk results for query: {} [timeout={}, poll={}]",
+            splQuery, searchConfig.awaitTimeout(), searchConfig.awaitPollInterval());
+        AtomicReference<SplunkSearchResponse> captured = new AtomicReference<>();
+        Awaitility.await("Splunk search: " + splQuery)
+            .atMost(searchConfig.awaitTimeout())
+            .pollInterval(searchConfig.awaitPollInterval())
+            .pollInSameThread()
+            .until(() -> {
+                SplunkSearchResponse response = searchOneShot(splQuery, earliestTime, latestTime);
+                if (predicate.test(response)) {
+                    captured.set(response);
+                    return true;
+                }
+                LOGGER.debug("Splunk search returned {} result(s), predicate not yet satisfied",
+                    response.size());
+                return false;
+            });
+        LOGGER.info("Splunk await completed with {} result(s)", captured.get().size());
+        return captured.get();
+    }
+
+    public SplunkSearchResponse awaitResults(String splQuery, Predicate<SplunkSearchResponse> predicate) {
+        return awaitResults(
+            splQuery,
+            searchConfig.defaultEarliestTime(),
+            searchConfig.defaultLatestTime(),
+            predicate
+        );
+    }
+
+    public SplunkSearchResponse awaitNonEmpty(String splQuery) {
+        return awaitResults(splQuery, response -> !response.isEmpty());
+    }
+
+    public SplunkSearchResponse awaitResultsWithField(
+        String splQuery, String fieldName, String fieldValue
+    ) {
+        SplunkSearchResponse response = awaitResults(
+            splQuery,
+            resp -> !resp.filterByField(fieldName, fieldValue).isEmpty()
+        );
+        return response.filterByField(fieldName, fieldValue);
+    }
 
     @Override
-    void close();
+    public void close() {
+        LOGGER.debug("SplunkClient closed");
+    }
+
+    // ── Authentication ──────────────────────────────────────────────
+
+    private String authenticate() {
+        LOGGER.info("Authenticating with Splunk at {}", connectionConfig.baseUrl());
+        RequestSpecification spec = RestAssured.given();
+        if (connectionConfig.allowUntrustedSsl()) {
+            spec.relaxedHTTPSValidation();
+        }
+        Response response = spec
+            .formParam("username", connectionConfig.username())
+            .formParam("password", connectionConfig.password())
+            .formParam("output_mode", "json")
+            .post(connectionConfig.baseUrl() + AUTH_LOGIN_ENDPOINT);
+        if (response.statusCode() != 200) {
+            throw new IllegalStateException(
+                "Splunk authentication failed with status " + response.statusCode()
+                    + ": " + response.getBody().asString()
+            );
+        }
+        try {
+            JsonNode root = objectMapper.readTree(response.getBody().asString());
+            String key = root.path("sessionKey").asText();
+            if (key == null || key.isBlank()) {
+                throw new IllegalStateException("Splunk authentication response did not contain sessionKey");
+            }
+            LOGGER.info("Splunk authentication successful");
+            return key;
+        } catch (IllegalStateException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new IllegalStateException("Unable to parse Splunk authentication response", e);
+        }
+    }
+
+    private Response executeWithAuth(RequestExecutor executor) {
+        if (sessionKey == null) {
+            sessionKey = authenticate();
+        }
+        Response response = executor.execute();
+        if (response.statusCode() == 401) {
+            LOGGER.info("Splunk session expired, re-authenticating");
+            sessionKey = authenticate();
+            response = executor.execute();
+        }
+        if (response.statusCode() >= 400) {
+            throw new IllegalStateException(
+                "Splunk REST API returned status " + response.statusCode()
+                    + ": " + response.getBody().asString()
+            );
+        }
+        return response;
+    }
+
+    private RequestSpecification baseRequest() {
+        RequestSpecification spec = RestAssured.given()
+            .header("Authorization", "Splunk " + sessionKey);
+        if (connectionConfig.allowUntrustedSsl()) {
+            spec.relaxedHTTPSValidation();
+        }
+        return spec;
+    }
+
+    // ── Response parsing ────────────────────────────────────────────
+
+    private List<SplunkSearchResult> parseExportResults(String responseBody) {
+        if (responseBody == null || responseBody.isBlank()) {
+            return Collections.emptyList();
+        }
+        List<SplunkSearchResult> results = new ArrayList<>();
+        for (String line : responseBody.split("\n")) {
+            String trimmed = line.trim();
+            if (trimmed.isEmpty()) continue;
+            try {
+                JsonNode node = objectMapper.readTree(trimmed);
+                if (node.has("result")) {
+                    results.add(toSearchResult(node.get("result")));
+                }
+            } catch (Exception e) {
+                LOGGER.debug("Skipping unparseable export line: {}", trimmed);
+            }
+        }
+        return results;
+    }
+
+    private List<SplunkSearchResult> parseJobResults(String responseBody) {
+        if (responseBody == null || responseBody.isBlank()) {
+            return Collections.emptyList();
+        }
+        try {
+            JsonNode root = objectMapper.readTree(responseBody);
+            JsonNode resultsNode = root.path("results");
+            if (!resultsNode.isArray()) {
+                return Collections.emptyList();
+            }
+            List<SplunkSearchResult> results = new ArrayList<>();
+            for (JsonNode node : resultsNode) {
+                results.add(toSearchResult(node));
+            }
+            return results;
+        } catch (Exception e) {
+            throw new IllegalStateException("Unable to parse Splunk job results", e);
+        }
+    }
+
+    private SplunkSearchResult toSearchResult(JsonNode resultNode) {
+        String raw = resultNode.path("_raw").asText(null);
+        String timeStr = resultNode.path("_time").asText(null);
+        String source = resultNode.path("source").asText(null);
+        String sourceType = resultNode.path("sourcetype").asText(null);
+        String host = resultNode.path("host").asText(null);
+        String index = resultNode.path("index").asText(null);
+        Instant time = parseTime(timeStr);
+        Map<String, String> fields = new LinkedHashMap<>();
+        for (Map.Entry<String, JsonNode> entry : resultNode.properties()) {
+            fields.put(entry.getKey(), entry.getValue().asText());
+        }
+        return new SplunkSearchResult(raw, time, source, sourceType, host, index,
+            Collections.unmodifiableMap(fields));
+    }
+
+    private static Instant parseTime(String timeStr) {
+        if (timeStr == null || timeStr.isBlank()) return null;
+        try {
+            return Instant.parse(timeStr);
+        } catch (DateTimeParseException e) {
+            try {
+                return Instant.ofEpochSecond(Long.parseLong(timeStr.split("\\.")[0]));
+            } catch (NumberFormatException ignored) {
+                return null;
+            }
+        }
+    }
+
+    @FunctionalInterface
+    private interface RequestExecutor {
+        Response execute();
+    }
+
+    // ── Nested enum (moved from model.SplunkJobStatus) ──────────────
+
+    public enum SplunkJobStatus {
+        QUEUED, PARSING, RUNNING, PAUSED, FINALIZING, DONE, FAILED, UNKNOWN;
+
+        public static SplunkJobStatus fromDispatchState(String dispatchState) {
+            if (dispatchState == null || dispatchState.isBlank()) return UNKNOWN;
+            try {
+                return valueOf(dispatchState.toUpperCase(Locale.ROOT));
+            } catch (IllegalArgumentException ignored) {
+                return UNKNOWN;
+            }
+        }
+
+        public boolean isTerminal() {
+            return this == DONE || this == FAILED;
+        }
+    }
 }
