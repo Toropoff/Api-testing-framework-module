@@ -2,26 +2,17 @@ package com.apiframework.splunk.config;
 
 import java.time.Duration;
 
-/**
- * Default search timing parameters used by the awaiter and search execution.
- *
- * @param defaultEarliestTime SPL earliest_time parameter, e.g. "-15m"
- * @param defaultLatestTime   SPL latest_time parameter, e.g. "now"
- * @param awaitTimeout        maximum duration to wait for search results to appear
- * @param awaitPollInterval   interval between polling attempts when awaiting results
- * @param jobPollInterval     interval between job status polls for async searches
- */
+// Search timing parameters: time window for queries and poll/timeout intervals for await operations.
+// Pass a custom instance to SplunkClient when the defaults are too tight or too loose.
 public record SplunkSearchConfig(
-    String defaultEarliestTime,
-    String defaultLatestTime,
-    Duration awaitTimeout,
-    Duration awaitPollInterval,
-    Duration jobPollInterval
+    String defaultEarliestTime,  // SPL earliest_time, e.g. "-15m"
+    String defaultLatestTime,    // SPL latest_time, e.g. "now"
+    Duration awaitTimeout,       // How long awaitNonEmpty/awaitResults will poll before failing
+    Duration awaitPollInterval,  // Delay between one-shot search attempts during await
+    Duration jobPollInterval     // Delay between dispatchState polls for async jobs
 ) {
 
-    /**
-     * Sensible defaults: search last 15 minutes, await up to 60s, poll every 3s.
-     */
+    // Sensible defaults for most test scenarios: 15-minute window, 60s await, 3s poll.
     public static SplunkSearchConfig defaults() {
         return new SplunkSearchConfig(
             "-15m",
