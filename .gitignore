@@ -14,3 +14,5 @@ allure-open.sh
 ARCHITECTURE.md
 AllureTestNgListener-refs.md
 **/SplunkConnectionConfig.java
+/.stoneforge/.worktrees/
+/.stoneforge/
