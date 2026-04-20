@@ -25,6 +25,8 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 
+// Splunk REST API client. Manages session-key auth, executes one-shot and async job searches,
+// and polls until results appear. Single class — no interface, no separate awaiter.
 public final class SplunkClient implements AutoCloseable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SplunkClient.class);
@@ -38,10 +40,12 @@ public final class SplunkClient implements AutoCloseable {
     private final ObjectMapper objectMapper;
     private volatile String sessionKey;
 
+    // Use when default search timing (SplunkSearchConfig.defaults()) is sufficient.
     public SplunkClient(SplunkConnectionConfig connectionConfig) {
         this(connectionConfig, SplunkSearchConfig.defaults());
     }
 
+    // Use when custom poll interval or time window is needed.
     public SplunkClient(SplunkConnectionConfig connectionConfig, SplunkSearchConfig searchConfig) {
         this.connectionConfig = connectionConfig;
         this.searchConfig = searchConfig;
@@ -50,6 +54,7 @@ public final class SplunkClient implements AutoCloseable {
 
     // ── Search operations ───────────────────────────────────────────
 
+    // Synchronous search via /services/search/jobs/export. Blocks until all results are returned.
     public SplunkSearchResponse searchOneShot(String splQuery, String earliestTime, String latestTime) {
         LOGGER.info("Executing one-shot Splunk search: {} [earliest={}, latest={}]",
             splQuery, earliestTime, latestTime);
@@ -66,10 +71,12 @@ public final class SplunkClient implements AutoCloseable {
         return new SplunkSearchResponse(results);
     }
 
+    // Convenience overload using default time bounds from SplunkSearchConfig.
     public SplunkSearchResponse searchOneShot(String splQuery) {
         return searchOneShot(splQuery, searchConfig.defaultEarliestTime(), searchConfig.defaultLatestTime());
     }
 
+    // Creates an async search job via /services/search/jobs. Returns the job SID for polling.
     public String createSearchJob(String splQuery, String earliestTime, String latestTime) {
         LOGGER.info("Creating Splunk search job: {} [earliest={}, latest={}]",
             splQuery, earliestTime, latestTime);
@@ -96,6 +103,7 @@ public final class SplunkClient implements AutoCloseable {
         }
     }
 
+    // Reads the current dispatchState of an async job by its SID.
     public SplunkJobStatus getJobStatus(String jobSid) {
         Response response = executeWithAuth(() ->
             baseRequest()
@@ -112,6 +120,7 @@ public final class SplunkClient implements AutoCloseable {
         }
     }
 
+    // Fetches results of a DONE job. Call only after getJobStatus returns DONE.
     public SplunkSearchResponse getJobResults(String jobSid) {
         LOGGER.info("Retrieving results for Splunk job SID: {}", jobSid);
         Response response = executeWithAuth(() ->
@@ -125,6 +134,7 @@ public final class SplunkClient implements AutoCloseable {
         return new SplunkSearchResponse(results);
     }
 
+    // Creates a job, polls until DONE or FAILED, then returns results. Combines the three steps above.
     public SplunkSearchResponse searchBlocking(String splQuery, String earliestTime, String latestTime) {
         String sid = createSearchJob(splQuery, earliestTime, latestTime);
         long timeoutMs = searchConfig.awaitTimeout().toMillis();
@@ -151,12 +161,15 @@ public final class SplunkClient implements AutoCloseable {
         );
     }
 
+    // Convenience overload using default time bounds.
     public SplunkSearchResponse searchBlocking(String splQuery) {
         return searchBlocking(splQuery, searchConfig.defaultEarliestTime(), searchConfig.defaultLatestTime());
     }
 
     // ── Await operations ────────────────────────────────────────────
 
+    // Polls searchOneShot repeatedly until the predicate is satisfied or timeout elapses.
+    // Handles Splunk indexing latency — results may not appear immediately after an event.
     public SplunkSearchResponse awaitResults(
         String splQuery,
         String earliestTime,
@@ -184,6 +197,7 @@ public final class SplunkClient implements AutoCloseable {
         return captured.get();
     }
 
+    // Convenience overload using default time bounds from SplunkSearchConfig.
     public SplunkSearchResponse awaitResults(String splQuery, Predicate<SplunkSearchResponse> predicate) {
         return awaitResults(
             splQuery,
@@ -193,10 +207,12 @@ public final class SplunkClient implements AutoCloseable {
         );
     }
 
+    // Polls until at least one result exists. Most common await use case.
     public SplunkSearchResponse awaitNonEmpty(String splQuery) {
         return awaitResults(splQuery, response -> !response.isEmpty());
     }
 
+    // Polls until at least one result has the given field value, then returns only matching results.
     public SplunkSearchResponse awaitResultsWithField(
         String splQuery, String fieldName, String fieldValue
     ) {
@@ -214,6 +230,8 @@ public final class SplunkClient implements AutoCloseable {
 
     // ── Authentication ──────────────────────────────────────────────
 
+    // POST /services/auth/login with username/password. Returns the session key.
+    // Throws IllegalStateException on non-200 or missing sessionKey in response.
     private String authenticate() {
         LOGGER.info("Authenticating with Splunk at {}", connectionConfig.baseUrl());
         RequestSpecification spec = RestAssured.given();
@@ -246,6 +264,7 @@ public final class SplunkClient implements AutoCloseable {
         }
     }
 
+    // Executes the request with a valid session key. Re-authenticates once on 401 (session expiry).
     private Response executeWithAuth(RequestExecutor executor) {
         if (sessionKey == null) {
             sessionKey = authenticate();
@@ -265,6 +284,7 @@ public final class SplunkClient implements AutoCloseable {
         return response;
     }
 
+    // Builds a base RestAssured spec with the current session key and SSL config applied.
     private RequestSpecification baseRequest() {
         RequestSpecification spec = RestAssured.given()
             .header("Authorization", "Splunk " + sessionKey);
@@ -276,6 +296,7 @@ public final class SplunkClient implements AutoCloseable {
 
     // ── Response parsing ────────────────────────────────────────────
 
+    // Parses NDJSON from /export endpoint — one JSON object per line, each with a "result" field.
     private List<SplunkSearchResult> parseExportResults(String responseBody) {
         if (responseBody == null || responseBody.isBlank()) {
             return Collections.emptyList();
@@ -296,6 +317,7 @@ public final class SplunkClient implements AutoCloseable {
         return results;
     }
 
+    // Parses the "results" array from an async job's result response.
     private List<SplunkSearchResult> parseJobResults(String responseBody) {
         if (responseBody == null || responseBody.isBlank()) {
             return Collections.emptyList();
@@ -316,6 +338,8 @@ public final class SplunkClient implements AutoCloseable {
         }
     }
 
+    // Maps a single result JSON node to a SplunkSearchResult record.
+    // Extracts well-known fields (_raw, _time, source, etc.) plus all remaining fields into a map.
     private SplunkSearchResult toSearchResult(JsonNode resultNode) {
         String raw = resultNode.path("_raw").asText(null);
         String timeStr = resultNode.path("_time").asText(null);
@@ -332,6 +356,7 @@ public final class SplunkClient implements AutoCloseable {
             Collections.unmodifiableMap(fields));
     }
 
+    // Parses _time as ISO-8601 first, then falls back to epoch seconds (Splunk non-ISO formats).
     private static Instant parseTime(String timeStr) {
         if (timeStr == null || timeStr.isBlank()) return null;
         try {
@@ -350,11 +375,13 @@ public final class SplunkClient implements AutoCloseable {
         Response execute();
     }
 
-    // ── Nested enum (moved from model.SplunkJobStatus) ──────────────
+    // ── Nested enum ─────────────────────────────────────────────────
 
+    // Maps Splunk job dispatchState strings to typed constants. Only used internally by this client.
     public enum SplunkJobStatus {
         QUEUED, PARSING, RUNNING, PAUSED, FINALIZING, DONE, FAILED, UNKNOWN;
 
+        // Converts a raw dispatchState string from the REST API. Returns UNKNOWN for unrecognised values.
         public static SplunkJobStatus fromDispatchState(String dispatchState) {
             if (dispatchState == null || dispatchState.isBlank()) return UNKNOWN;
             try {
@@ -364,6 +391,7 @@ public final class SplunkClient implements AutoCloseable {
             }
         }
 
+        // True when the job has reached a final state (no more status changes expected).
         public boolean isTerminal() {
             return this == DONE || this == FAILED;
         }

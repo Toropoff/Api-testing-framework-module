@@ -5,31 +5,21 @@ import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-/**
- * Wrapper around a list of Splunk search results with chainable filtering and extraction utilities.
- * Returned by all search operations on {@link com.apiframework.splunk.SplunkClient}.
- *
- * @param results the ordered list of search result records
- */
+// Ordered list of Splunk search results with chainable filter and accessor helpers.
+// Returned by all search and await operations on SplunkClient.
 public record SplunkSearchResponse(List<SplunkSearchResult> results) {
 
-    /**
-     * Returns {@code true} if the search produced no results.
-     */
+    // True when the search produced no results.
     public boolean isEmpty() {
         return results.isEmpty();
     }
 
-    /**
-     * Returns the number of results.
-     */
+    // Number of results in this response.
     public int size() {
         return results.size();
     }
 
-    /**
-     * Returns a new {@code SplunkSearchResponse} containing only results matching the predicate.
-     */
+    // Returns a new response containing only the results that match the predicate.
     public SplunkSearchResponse filter(Predicate<SplunkSearchResult> predicate) {
         List<SplunkSearchResult> filtered = results.stream()
             .filter(predicate)
@@ -37,41 +27,28 @@ public record SplunkSearchResponse(List<SplunkSearchResult> results) {
         return new SplunkSearchResponse(filtered);
     }
 
-    /**
-     * Returns a new response containing only results where the {@code source} field
-     * equals the given value (case-insensitive).
-     */
+    // Narrows results to those whose source field matches (case-insensitive).
     public SplunkSearchResponse filterBySource(String source) {
         return filter(result -> source.equalsIgnoreCase(result.source()));
     }
 
-    /**
-     * Returns a new response containing only results where the {@code host} field
-     * equals the given value (case-insensitive).
-     */
+    // Narrows results to those whose host field matches (case-insensitive).
     public SplunkSearchResponse filterByHost(String host) {
         return filter(result -> host.equalsIgnoreCase(result.host()));
     }
 
-    /**
-     * Returns a new response containing only results where the given field name
-     * equals the given value.
-     */
+    // Narrows results to those where the named field equals fieldValue.
     public SplunkSearchResponse filterByField(String fieldName, String fieldValue) {
         return filter(result -> fieldValue.equals(result.field(fieldName)));
     }
 
-    /**
-     * Returns the first result, or empty if no results.
-     */
+    // Returns the first result, or empty if no results exist.
     public Optional<SplunkSearchResult> first() {
         return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
     }
 
-    /**
-     * Returns the first result, throwing {@link AssertionError} if no results exist.
-     * Useful in test assertions where at least one result is expected.
-     */
+    // Returns the first result. Throws AssertionError if no results exist.
+    // Use in tests where at least one result is required.
     public SplunkSearchResult firstOrFail() {
         return first().orElseThrow(
             () -> new AssertionError("Expected at least one Splunk search result, but found none")

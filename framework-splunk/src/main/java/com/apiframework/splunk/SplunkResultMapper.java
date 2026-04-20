@@ -4,11 +4,8 @@ import com.apiframework.json.JacksonProvider;
 import com.apiframework.splunk.model.SplunkSearchResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-/**
- * Maps Splunk search result content to typed Java objects.
- * Follows the same pattern as MessagePayloadMapper: wraps JacksonProvider.defaultMapper(),
- * provides generic typed mapping.
- */
+// Deserializes Splunk result content into typed Java objects via Jackson.
+// Wraps JacksonProvider.defaultMapper() and provides consistent error wrapping.
 public final class SplunkResultMapper {
 
     private final ObjectMapper objectMapper;
@@ -17,16 +14,8 @@ public final class SplunkResultMapper {
         this.objectMapper = JacksonProvider.defaultMapper();
     }
 
-    /**
-     * Deserializes the {@code _raw} field of a SplunkSearchResult into the given target class.
-     * Useful when {@code _raw} contains a structured JSON log payload.
-     *
-     * @param result      the Splunk search result whose _raw field will be parsed
-     * @param targetClass the class to deserialize into
-     * @param <T>         the target type
-     * @return deserialized object of type T
-     * @throws IllegalStateException if deserialization fails
-     */
+    // Parses the _raw field of a result as JSON into targetClass.
+    // Use when _raw contains a structured JSON log payload.
     public <T> T mapRaw(SplunkSearchResult result, Class<T> targetClass) {
         String raw = result.raw();
         if (raw == null || raw.isBlank()) {
@@ -41,16 +30,7 @@ public final class SplunkResultMapper {
         }
     }
 
-    /**
-     * Deserializes a specific field's value from the result's fields map into the given target class.
-     *
-     * @param result      the Splunk search result
-     * @param fieldName   the field name whose value should be deserialized
-     * @param targetClass the class to deserialize into
-     * @param <T>         the target type
-     * @return deserialized object of type T
-     * @throws IllegalStateException if the field does not exist or deserialization fails
-     */
+    // Parses the string value of a named field from the result's fields map into targetClass.
     public <T> T mapField(SplunkSearchResult result, String fieldName, Class<T> targetClass) {
         String value = result.field(fieldName);
         if (value == null) {
@@ -64,16 +44,7 @@ public final class SplunkResultMapper {
         }
     }
 
-    /**
-     * Deserializes a JSON string directly into the given target class.
-     * Provided for consistency with MessagePayloadMapper.map().
-     *
-     * @param json        raw JSON string
-     * @param targetClass the class to deserialize into
-     * @param <T>         the target type
-     * @return deserialized object of type T
-     * @throws IllegalStateException if deserialization fails
-     */
+    // Parses an arbitrary JSON string into targetClass. Direct Jackson wrapper for consistency.
     public <T> T map(String json, Class<T> targetClass) {
         try {
             return objectMapper.readValue(json, targetClass);
