@@ -17,3 +17,6 @@ AllureTestNgListener-refs.md
 /.stoneforge/.worktrees/
 /.stoneforge/
 /node_modules/
+.opencode/
+package-lock.json
+package.json
