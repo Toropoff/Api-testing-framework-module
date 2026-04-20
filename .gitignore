@@ -16,3 +16,4 @@ AllureTestNgListener-refs.md
 **/SplunkConnectionConfig.java
 /.stoneforge/.worktrees/
 /.stoneforge/
+/node_modules/
