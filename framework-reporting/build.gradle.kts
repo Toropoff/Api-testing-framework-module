@@ -9,3 +9,6 @@ dependencies {
     compileOnly("org.aspectj:aspectjrt:1.9.22")
     testImplementation("org.testng:testng:7.12.0")
 }
+plugins {
+    id("java-library")
+}

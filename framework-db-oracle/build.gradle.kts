@@ -7,3 +7,6 @@ dependencies {
     compileOnly("jakarta.xml.bind:jakarta.xml.bind-api:4.0.2")
     testImplementation("org.testng:testng:7.12.0")
 }
+plugins {
+    id("java-library")
+}

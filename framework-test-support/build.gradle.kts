@@ -11,3 +11,6 @@ dependencies {
     testImplementation("org.testng:testng:7.12.0")
     testImplementation("org.assertj:assertj-core:3.27.6")
 }
+plugins {
+    id("java-library")
+}

@@ -1,11 +1,8 @@
-dependencies {
-    testImplementation(project(":framework-test-support"))
-    testImplementation(project(":framework-reporting"))
-    testImplementation(project(":domains"))
-}
-
 tasks.test {
     useTestNG {
         suites("src/test/resources/testng-smoke.xml")
     }
+}
+plugins {
+    id("java")
 }
