@@ -1,6 +1,7 @@
 package com.apiframework.reporting.allure;
 
 import com.apiframework.config.ConfigResolver;
+import com.apiframework.config.EnvResolver;
 import com.apiframework.testsupport.retry.FrameworkRetryAnalyzer;
 import io.qameta.allure.Allure;
 import io.restassured.RestAssured;
@@ -59,7 +60,7 @@ public final class AllureTestNgListener implements ITestListener, ISuiteListener
     // after the suite finishes — populates the Allure Environment and Executors widgets.
     @Override
     public void onFinish(ISuite suite) {
-        String outputDir = System.getProperty("allure.env.dir", "allure-results");
+        String outputDir = EnvResolver.string("ALLURE_ENV_DIR", "allure-results");
         try {
             String env = ConfigResolver.resolveFromSystem().env();
             Properties props = new Properties();
@@ -71,7 +72,7 @@ public final class AllureTestNgListener implements ITestListener, ISuiteListener
         } catch (Exception e) {
             // silent — environment.properties is non-critical
         }
-        if (System.getenv("CI") == null) {
+        if (EnvResolver.string("CI", "").isBlank()) {
             try {
                 Files.createDirectories(Paths.get(outputDir));
                 Files.writeString(Paths.get(outputDir, "executor.json"),

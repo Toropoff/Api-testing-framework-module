@@ -2,6 +2,7 @@ package com.apiframework.testsupport.base;
 
 import com.apiframework.config.ConfigResolver;
 import com.apiframework.config.EndpointDefinition;
+import com.apiframework.config.EnvResolver;
 import com.apiframework.config.FrameworkRuntimeConfig;
 import com.apiframework.config.HttpVerb;
 import com.apiframework.http.CorrelationIdFilter;
@@ -22,6 +23,8 @@ import org.testng.annotations.Listeners;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -62,10 +65,9 @@ public abstract class BaseApiTest {
             .setConfig(restAssuredConfig)
             .addFilter(new CorrelationIdFilter());
 
-        String clientName   = System.getenv("FRAMEWORK_CLIENT_NAME");
-        String clientSecret = System.getenv("FRAMEWORK_CLIENT_SECRET");
-        if (clientName != null && !clientName.isBlank()
-                && clientSecret != null && !clientSecret.isBlank()) {
+        String clientName   = EnvResolver.string("FRAMEWORK_CLIENT_NAME", "");
+        String clientSecret = EnvResolver.string("FRAMEWORK_CLIENT_SECRET", "");
+        if (!clientName.isBlank() && !clientSecret.isBlank()) {
             specBuilder.setAuth(preemptive().basic(clientName, clientSecret));
         }
 
@@ -106,13 +108,11 @@ public abstract class BaseApiTest {
 
     private static Properties loadDomainProperties(String domainName) {
         Properties all = new Properties();
-        try (InputStream in = BaseApiTest.class.getClassLoader().getResourceAsStream("domains.properties")) {
-            if (in == null) {
-                throw new IllegalStateException("domains.properties not found on classpath");
-            }
+        Path domainsPath = Path.of(EnvResolver.required("FRAMEWORK_DOMAINS_PATH"));
+        try (InputStream in = Files.newInputStream(domainsPath)) {
             all.load(in);
         } catch (IOException e) {
-            throw new IllegalStateException("Failed to load domains.properties", e);
+            throw new IllegalStateException("Failed to load domains.properties from: " + domainsPath, e);
         }
 
         String prefix = domainName + ".";
