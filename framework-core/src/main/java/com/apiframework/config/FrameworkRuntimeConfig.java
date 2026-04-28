@@ -4,6 +4,8 @@ public record FrameworkRuntimeConfig(
     String env,
     String baseUrl,
     int connectTimeoutMs,
-    int readTimeoutMs
+    int readTimeoutMs,
+    String clientName,
+    String clientSecret
 ) {
 }

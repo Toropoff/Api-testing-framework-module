@@ -6,89 +6,46 @@ import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.gradle.jvm.toolchain.JavaLanguageVersion
 
+group = "systems.leadex.testframework"
+version = "1.0.0"
+
 plugins {
-    id("io.qameta.allure") version "3.0.1"
+    `java-library`
 }
 
 allprojects {
-    group = "com.apiframework"
-    version = "0.1.0-SNAPSHOT"
-
     repositories {
         mavenCentral()
     }
 }
 
 /* =========================
-   Allure aggregation
-   ========================= */
-
-val aggregatedAllureResultsDir = layout.buildDirectory.dir("allure-results")
-val previousAllureHistoryDir = layout.buildDirectory.dir("reports/allure-report/allureReport/history")
-val allureEnvDir = layout.projectDirectory.dir("framework-reporting/allure-results")
-
-val suiteNames = listOf("smoke", "regression", "integration", "public-api")
-val suiteAllureResultDirs = suiteNames.map { layout.projectDirectory.dir("test-suites/$it/build/allure-results") }
-val allureSuiteTaskPaths = suiteNames.map { ":test-suites:$it:test" }
-
-tasks.register("runSuitesForAllure") {
-    group = "verification"
-    dependsOn(allureSuiteTaskPaths)
-}
-
-tasks.register("collectAllureResults") {
-    group = "verification"
-    mustRunAfter("runSuitesForAllure")
-
-    doLast {
-        val outputDir = aggregatedAllureResultsDir.get().asFile
-        val previousHistoryDir = previousAllureHistoryDir.get().asFile
-
-        delete(outputDir)
-        outputDir.mkdirs()
-
-        copy {
-            suiteAllureResultDirs.forEach { from(it) }
-            into(outputDir)
-            duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-        }
-
-        copy {
-            from("framework-reporting/src/main/resources/allure") { include("categories.json") }
-            into(outputDir)
-        }
-
-        copy {
-            from(allureEnvDir) { include("environment.properties", "executor.json") }
-            into(outputDir)
-        }
-
-        if (previousHistoryDir.exists()) {
-            copy {
-                from(previousHistoryDir)
-                into(outputDir.resolve("history"))
-            }
-        }
-    }
-}
-
-tasks.named("allureReport") {
-    dependsOn("collectAllureResults")
-    mustRunAfter("runSuitesForAllure")
-}
-
-tasks.register("allureReportWithTests") {
-    group = "verification"
-    dependsOn("runSuitesForAllure", "allureReport")
-}
-
-/* =========================
-   Java config (SAFE)
+   Java + publish config
    ========================= */
 
 subprojects {
 
-    plugins.withId("java") {
+    plugins.withId("java-library") {
+
+        apply(plugin = "maven-publish")
+
+        extensions.configure<PublishingExtension> {
+            publications {
+                create<MavenPublication>("gpr") {
+                    from(components["java"])
+                }
+            }
+            repositories {
+                maven {
+                    name = "GitHubPackages"
+                    url = uri("https://maven.pkg.github.com/Toropoff/Api-testing-framework-module")
+                    credentials {
+                        username = System.getenv("GITHUB_ACTOR")
+                        password = System.getenv("GITHUB_TOKEN")
+                    }
+                }
+            }
+        }
 
         extensions.configure<org.gradle.api.plugins.JavaPluginExtension> {
             toolchain {
@@ -111,7 +68,6 @@ subprojects {
         tasks.withType<Test>().configureEach {
             useTestNG()
 
-            // AspectJ (если есть)
             doFirst {
                 val weaver = configurations.findByName("testRuntimeClasspath")
                     ?.files

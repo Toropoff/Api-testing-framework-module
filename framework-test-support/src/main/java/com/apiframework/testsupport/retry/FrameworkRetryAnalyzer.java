@@ -1,5 +1,6 @@
 package com.apiframework.testsupport.retry;
 
+import com.apiframework.config.EnvResolver;
 import com.apiframework.testsupport.network.NetworkAwareMethodListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,8 +64,8 @@ public final class FrameworkRetryAnalyzer implements IRetryAnalyzer {
 
     // Inlined from RetryConfiguration.globalPolicy()
     private RetryRuntimePolicy resolvePolicy(ITestResult result) {
-        int maxRetries = Integer.parseInt(System.getProperty("test.retry.maxRetries", "1"));
-        long delayMs = Long.parseLong(System.getProperty("test.retry.delayMs", "0"));
+        int maxRetries  = EnvResolver.integer("FRAMEWORK_RETRY_MAX_RETRIES", 1);
+        long delayMs    = Long.parseLong(EnvResolver.string("FRAMEWORK_RETRY_DELAY_MS", "500"));
         RetryRuntimePolicy global = new RetryRuntimePolicy(maxRetries, delayMs);
 
         Method method = result.getMethod().getConstructorOrMethod().getMethod();

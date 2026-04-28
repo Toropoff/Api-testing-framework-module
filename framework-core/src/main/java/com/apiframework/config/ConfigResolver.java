@@ -9,7 +9,9 @@ public final class ConfigResolver {
             EnvResolver.string("FRAMEWORK_ENV", "dev"),
             EnvResolver.required("FRAMEWORK_BASE_URL"),
             EnvResolver.integer("FRAMEWORK_CONNECT_TIMEOUT", 5000),
-            EnvResolver.integer("FRAMEWORK_READ_TIMEOUT", 15000)
+            EnvResolver.integer("FRAMEWORK_READ_TIMEOUT", 15000),
+            EnvResolver.string("FRAMEWORK_CLIENT_NAME", ""),
+            EnvResolver.string("FRAMEWORK_CLIENT_SECRET", "")
         );
         System.out.println(
             "Framework config: env=" + config.env() +

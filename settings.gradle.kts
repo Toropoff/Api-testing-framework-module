@@ -7,8 +7,5 @@ include(
     "framework-messaging-rabbitmq",
     "framework-splunk",
     "framework-reporting",
-    ":test-suites:smoke",
-    ":test-suites:regression",
-    ":test-suites:integration",
-    ":test-suites:public-api"
+    "framework-bundle"
 )

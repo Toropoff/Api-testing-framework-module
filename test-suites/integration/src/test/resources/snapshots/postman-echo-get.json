@@ -1,7 +1,0 @@
-{
-  "args": {
-    "suite": "integration"
-  },
-  "headers": "${json-unit.ignore}",
-  "url": "https://postman-echo.com/get?suite=integration"
-}
