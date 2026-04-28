@@ -6,7 +6,7 @@ import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.gradle.jvm.toolchain.JavaLanguageVersion
 
-group = "systems.leadex.testframework"
+group = "com.nameplaceholder.testframework"
 version = "1.0.0"
 
 plugins {
