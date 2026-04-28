@@ -1,6 +1,11 @@
 package com.apiframework.config;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public final class ConfigResolver {
+
+    private static final Logger log = LoggerFactory.getLogger(ConfigResolver.class);
 
     private ConfigResolver() {}
 
@@ -13,11 +18,9 @@ public final class ConfigResolver {
             EnvResolver.string("FRAMEWORK_CLIENT_NAME", ""),
             EnvResolver.string("FRAMEWORK_CLIENT_SECRET", "")
         );
-        System.out.println(
-            "Framework config: env=" + config.env() +
-            ", baseUrl=" + config.baseUrl() +
-            ", timeouts=" + config.connectTimeoutMs() + "/" + config.readTimeoutMs()
-        );
+        log.debug("Framework config: env={}, baseUrl={}, timeouts={}/{}, auth={}",
+            config.env(), config.baseUrl(), config.connectTimeoutMs(), config.readTimeoutMs(),
+            config.clientName().isBlank() ? "none" : "configured");
         return config;
     }
 }

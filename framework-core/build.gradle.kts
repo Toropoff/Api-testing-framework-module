@@ -1,3 +1,7 @@
+plugins {
+    id("java-library")
+}
+
 dependencies {
     api("io.rest-assured:rest-assured:6.0.0")
     api("com.fasterxml.jackson.core:jackson-databind:2.21.1")
@@ -7,7 +11,4 @@ dependencies {
     runtimeOnly("org.apache.logging.log4j:log4j-slf4j2-impl:2.25.3")
     testImplementation("org.testng:testng:7.12.0")
     testImplementation("org.assertj:assertj-core:3.27.6")
-}
-plugins {
-    id("java-library")
 }

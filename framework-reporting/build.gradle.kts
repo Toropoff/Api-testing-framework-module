@@ -1,3 +1,7 @@
+plugins {
+    id("java-library")
+}
+
 dependencies {
     api(project(":framework-core"))
     implementation(project(":framework-test-support"))
@@ -8,7 +12,4 @@ dependencies {
     // declared in framework-test-support where it is picked up by the root build jvmArgs hook.
     compileOnly("org.aspectj:aspectjrt:1.9.22")
     testImplementation("org.testng:testng:7.12.0")
-}
-plugins {
-    id("java-library")
 }
