@@ -47,11 +47,4 @@ public record SplunkSearchResponse(List<SplunkSearchResult> results) {
         return results.isEmpty() ? Optional.empty() : Optional.of(results.get(0));
     }
 
-    // Returns the first result. Throws AssertionError if no results exist.
-    // Use in tests where at least one result is required.
-    public SplunkSearchResult firstOrFail() {
-        return first().orElseThrow(
-            () -> new AssertionError("Expected at least one Splunk search result, but found none")
-        );
-    }
 }

@@ -6,9 +6,6 @@ import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.gradle.jvm.toolchain.JavaLanguageVersion
 
-group = "com.nameplaceholder.testframework"
-version = "1.0.0"
-
 plugins {
     `java-library`
 }
@@ -25,6 +22,8 @@ allprojects {
 
 subprojects {
 
+    group = "com.nameplaceholder.testframework"
+    version="1.0.0"
     plugins.withId("java-library") {
 
         apply(plugin = "maven-publish")
