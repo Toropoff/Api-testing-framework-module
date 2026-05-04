@@ -143,10 +143,8 @@ public final class SplunkClient implements AutoCloseable {
         while (System.currentTimeMillis() - startTime < timeoutMs) {
             SplunkJobStatus status = getJobStatus(sid);
             LOGGER.debug("Splunk job {} status: {}", sid, status);
-            if (status == SplunkJobStatus.DONE) {
-                return getJobResults(sid);
-            }
-            if (status == SplunkJobStatus.FAILED) {
+            if (status.isTerminal()) {
+                if (status == SplunkJobStatus.DONE) return getJobResults(sid);
                 throw new IllegalStateException("Splunk search job failed. SID: " + sid);
             }
             try {
