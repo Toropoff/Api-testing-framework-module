@@ -9,7 +9,6 @@ import com.apiframework.http.CorrelationIdFilter;
 import com.apiframework.http.HttpClient;
 import com.apiframework.http.RestAssuredHttpClient;
 import com.apiframework.testsupport.client.ApiRequestBuilder;
-import com.apiframework.testsupport.network.NetworkAwareMethodListener;
 import io.qameta.allure.Allure;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.config.HttpClientConfig;
@@ -19,8 +18,6 @@ import org.testng.ITestResult;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Listeners;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -34,7 +31,6 @@ import java.util.UUID;
 
 import static io.restassured.RestAssured.preemptive;
 
-@Listeners({NetworkAwareMethodListener.class})
 public abstract class BaseApiTest {
 
     private HttpClient                      httpClient;

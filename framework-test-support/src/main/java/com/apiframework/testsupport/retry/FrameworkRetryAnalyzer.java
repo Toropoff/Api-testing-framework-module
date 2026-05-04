@@ -58,8 +58,12 @@ public final class FrameworkRetryAnalyzer implements IRetryAnalyzer {
         if (failure instanceof AssertionError) return false;
         if (NetworkAwareMethodListener.hasNetworkCause(failure)) return true;
         String message = failure.getMessage() == null ? "" : failure.getMessage().toLowerCase();
-        return message.contains("timeout") || message.contains("connection reset")
-            || message.contains("502") || message.contains("503") || message.contains("504");
+        return message.contains("connection reset")
+            || message.contains("read timed out")
+            || message.contains("gateway timeout")
+            || message.contains("http 502")
+            || message.contains("http 503")
+            || message.contains("http 504");
     }
 
     // Inlined from RetryConfiguration.globalPolicy()
