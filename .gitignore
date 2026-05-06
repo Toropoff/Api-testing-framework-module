@@ -6,6 +6,7 @@
 
 # Avoid committing Gradle wrapper binary in this repository
 /gradle/wrapper/gradle-wrapper.jar
+pull_request_template.md
 .DS_Store
 .claude/
 .idea/
